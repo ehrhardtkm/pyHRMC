@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/runfile_setup/" />
+      <link rel="shortcut icon" href="../../../img/favicon.ico" />
+    <title>Runfile setup - pyHRMC</title>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Runfile setup";
+        var mkdocs_page_input_path = "user_guide/getting_started/runfile_setup.md";
+        var mkdocs_page_url = "/pyHRMC/user_guide/getting_started/runfile_setup/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../../.." class="icon icon-home"> pyHRMC
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../about/">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../installation/">Installation</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" >Getting started</a>
+    <ul class="current">
+                <li class="toctree-l2"><a class="reference internal" href="../required_files/">Required files</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">Runfile setup</a>
+    <ul class="current">
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../lammps_input/">LAMMPS input files</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../outputs/">Understanding outputs</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../validator_selection/">Validator selection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../nonhybrid_setup/">Non-hybrid simulations</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../..">pyHRMC</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">User Guide</li>
+          <li class="breadcrumb-item">Getting started</li>
+      <li class="breadcrumb-item active">Runfile setup</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide/getting_started/runfile_setup.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="runfile-setup">Runfile setup</h2>
+<p>All calculation parameters are defined in runfile.py, which instantiates the RMC class before calling the run_rmc() method to perform the simulation. A runfile should begin with necessary imports:</p>
+<pre><code>from pyHRMC.core.rmc import RMC
+import multiprocessing
+</code></pre>
+<p>To run a simulation, the user must first instantiate the RMC class with the required arguments. These arguments determine the quench rate of the error and energy constraints.</p>
+<pre><code>rmc = RMC(experimental_G_csv=str, sigma=float, q_scatter=float, q_temp=float, init_temp=float)
+</code></pre>
+<ul>
+<li>experimental_G_csv = filename of experiment ePDF</li>
+<li>sigma = initial value of sigma, the measure of uncertainty in ePDF data</li>
+<li>q_scatter = quench rate for error constraint (rate of decreasing sigma)</li>
+<li>q_temp =  quench rate for energy constraint (rate of decreasing temperature)</li>
+<li>init_temp = initial temperature, which determines the acceptance probability based on energy constraint</li>
+</ul>
+<p>To perform a simulation, use the run_rmc() method and further specify simulation parameters and constraints.</p>
+<pre><code>rmc.run_rmc(num_processes=int, initial_structure=str, keV=int, prdf_args={“bin_size:float}, transformations={“AtomHop”:{}}, validators={args}, max_steps=int)
+</code></pre>
+<ul>
+<li>num_processes = the number of processes to use in the simulation. If a serial simulation is desired, set to 1. </li>
+<li>initial_structure = the filename of the structure file to use as an initial configuration. This file must be in a POSCAR/VASP format. The structure should have the correct stoichiometry, sincve HRMC does not affect the composition of the structure. </li>
+<li>keV = the accelerating voltage of the electron microsope used to capture scattering data</li>
+<li>prdf_args<ul>
+<li>bin_size: the bin size of the computed PDFs, in angstroms. Default is 0.04 angstroms.</li>
+</ul>
+</li>
+<li>transformations<ul>
+<li>AtomHop: currently the only kind of transformation available in pyHRMC. This transformation creates a spherical grid of radius 1 Angstrom around an atom and selects a cell within the grid randomly. The coordinates of the selected cell are treated as the new coordinates of the atom. This transformer only moves one atom at a time, but this action can be parallelized for major speedups and yield structures with multiple moved atoms in a single step.</li>
+</ul>
+</li>
+<li>
+<p>validators = details on available validators can be found on the <a href="http://127.0.0.1:8000/user_guide/validator_selection/">Validator selection</a> page.</p>
+<ul>
+<li>SlabThickness</li>
+<li>Coordination <ul>
+<li>BulkCoordinationRange</li>
+<li>SurfaceCoordinationRange</li>
+<li>SurfaceDistance</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>max_steps = maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </p>
+</li>
+</ul>
+<h2 id="example">Example</h2>
+<p>An example runfile.py for a simulation of amorphous Al2O3 is shown below:</p>
+<pre><code>from pyHRMC.core.rmc import RMC
+import multiprocessing
+
+if __name__ == &quot;__main__&quot;:
+
+    rmc = RMC(experimental_G_csv=&quot;al2o3_5nm_gr.txt&quot;, sigma = 0.05, q_scatter = 1, q_temp = 0.999999995, init_temp = 1000)
+    rmc.run_rmc(
+        num_processes = 8,
+        initial_structure=&quot;POSCAR_47A-d33&quot;,
+        keV=200,
+        prdf_args={&quot;bin_size&quot;: 0.04},
+        transformations={
+            &quot;AtomHop&quot;: {}, # consider adding a second, smaller step size &quot;max_step&quot;: 0.2
+        },
+
+        validators={
+            &quot;SlabThickness&quot;: {&quot;max_thickness&quot;: 47.4},
+            &quot;Coordination&quot;: {
+                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
+                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
+                &quot;SurfaceDistance&quot;: 5
+                }
+            },
+
+        max_steps= 1000000,
+    )
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../required_files/" class="btn btn-neutral float-left" title="Required files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../lammps_input/" class="btn btn-neutral float-right" title="LAMMPS input files">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ehrhardtkm/pyHRMC" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../required_files/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../lammps_input/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../../..";</script>
+    <script src="../../../js/theme_extra.js"></script>
+    <script src="../../../js/theme.js"></script>
+      <script src="../../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

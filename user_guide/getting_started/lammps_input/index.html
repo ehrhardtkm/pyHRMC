@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/lammps_input/" />
+      <link rel="shortcut icon" href="../../../img/favicon.ico" />
+    <title>LAMMPS input files - pyHRMC</title>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "LAMMPS input files";
+        var mkdocs_page_input_path = "user_guide/getting_started/lammps_input.md";
+        var mkdocs_page_url = "/pyHRMC/user_guide/getting_started/lammps_input/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../../.." class="icon icon-home"> pyHRMC
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../about/">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../installation/">Installation</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" >Getting started</a>
+    <ul class="current">
+                <li class="toctree-l2"><a class="reference internal" href="../required_files/">Required files</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../runfile_setup/">Runfile setup</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">LAMMPS input files</a>
+    <ul class="current">
+    <li class="toctree-l3"><a class="reference internal" href="#inlmp">in.lmp</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#example">Example</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#in_initlmp">in_init.lmp</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#in_acceptlmp">in_accept.lmp</a>
+    </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../outputs/">Understanding outputs</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../validator_selection/">Validator selection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../nonhybrid_setup/">Non-hybrid simulations</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../..">pyHRMC</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">User Guide</li>
+          <li class="breadcrumb-item">Getting started</li>
+      <li class="breadcrumb-item active">LAMMPS input files</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide/getting_started/lammps_input.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="lammps-input-and-potential-files">LAMMPS input and potential files</h1>
+<p>In pyHRMC, the structural energy is computed for every atom hop with LAMMPS. LAMMPS requires input files that act as a "to-do list" for the program, including information about the structure, desired computes, and running LAMMPS. For more detailed documentation, please refer to the official <a href="https://docs.lammps.org/Manual.html">LAMMPS documentation</a>. </p>
+<p>Curently, pyHRMC requires three input files. In the future, this wil be modified to reduce the number of files to one. </p>
+<h2 id="inlmp">in.lmp</h2>
+<p>Four sections are required for the in.lmp file: Initialization, Atom groups, Compute and outputs, and Run. </p>
+<p><strong>Initialization:</strong> This is used to select the units for LAMMPS to use, read in the structure, and specify potential parameters. Because pyHRMC will automatically write a structure data file in the LAMMPS format, always include the following line:</p>
+<pre><code>read_data data.lmp
+</code></pre>
+<p>Additionally, is using a potential model trained from FLARE, follow instructions in <a href="https://colab.research.google.com/drive/1qgGlfu1BlXQgSrnolS4c4AYeZ-2TaX5Y#scrollTo=VYJVQ7XSWUEq">their documentation</a> to include this in the input script.</p>
+<pre><code>pair_style    flare
+pair_coeff    * * lmp.flare
+</code></pre>
+<p><strong>Atom groups:</strong> Add the mass and element names of the elements in the cell. The numbering of the atom types will follow the order of atoms in the original structure file</p>
+<pre><code>mass {atom_type} {float}
+
+group {element_name} type {atom_type}
+</code></pre>
+<p><strong>Compute and outputs</strong></p>
+<pre><code>thermo 1
+thermo_style custom step pe ke etotal
+</code></pre>
+<p><strong>Run:</strong> Run the LAMMPS code for 0 timesteps, meaning that it will only perform the desired computes and not perform any molecular dynamics</p>
+<pre><code># Run the simulation
+run 0
+write_data out4.txt nocoeff nofix
+</code></pre>
+<h2 id="example">Example</h2>
+<pre><code># Initialization
+atom_style atomic
+units metal
+boundary p p p
+atom_modify sort 0 0.0
+newton on
+
+read_data data.lmp
+
+### interactions
+pair_style flare
+pair_coeff * * s_lmp.flare
+
+# Atom groups
+mass 1 26.981539
+mass 2 15.9994
+
+group Al type 1
+group O type 2
+
+
+#Compute and outputs
+compute unc all flare/std/atom s_L_inv_lmp.flare s_sparse_desc_lmp.flare
+compute MaxUnc all reduce max c_unc
+
+thermo 1
+thermo_style custom step pe ke etotal
+
+
+# Run the simulation
+run 0
+write_data out4.txt nocoeff nofix
+</code></pre>
+<h2 id="in_initlmp">in_init.lmp</h2>
+<p>This script requires additional lines to save each step in a file called "last_step.txt" to allow LAMMPS to restart at the appropriate timestep. Add the following lines before the run command in the original in.lmp script:</p>
+<pre><code># Save the final timestep to a file
+variable    last_step equal &quot;step&quot;
+shell       echo ${last_step} &gt; last_step.txt
+</code></pre>
+<h2 id="in_acceptlmp">in_accept.lmp</h2>
+<p>This script requires an additional line to read in the current timestep of the simulation. Add the following line before the run command in the original in.lmp script:</p>
+<pre><code># Read the last timestep from the file
+reset_timestep ${last_step}
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../runfile_setup/" class="btn btn-neutral float-left" title="Runfile setup"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../outputs/" class="btn btn-neutral float-right" title="Understanding outputs">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ehrhardtkm/pyHRMC" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../runfile_setup/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../outputs/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../../..";</script>
+    <script src="../../../js/theme_extra.js"></script>
+    <script src="../../../js/theme.js"></script>
+      <script src="../../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

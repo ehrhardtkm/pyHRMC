@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>User guide - pyHRMC</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "User guide";
+        var mkdocs_page_input_path = "user_guide.md";
+        var mkdocs_page_url = "/pyHRMC/user_guide/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> pyHRMC
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >Getting started</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="getting_started/required_files/">Required files</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="getting_started/runfile_setup/">Runfile setup</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="getting_started/lammps_input/">LAMMPS input files</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="getting_started/outputs/">Understanding outputs</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="validator_selection/">Validator selection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="nonhybrid_setup/">Non-hybrid simulations</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">pyHRMC</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">User guide</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="user-guide">User Guide</h2>
+<p>Running a simulation with pyHRMC requires several input files that contain calculation parameters, experimental data, and an initial structure configuration. To begin, create a new directory with the following files:
+-   Runfile.py
+-   Your epdf.gr
+-   initial_structure.vasp
+-   LAMMPS input files:
+o   In.lmp
+o   In_init.lmp
+o   In_accept.lmp
+-   FLARE force field model (Optional)
+All calculation parameters are defined in runfile.py, which instantiates the RMC class before calling the run_rmc() method to perform the simulation. </p>
+<pre><code>rmc = RMC(experimental_G_csv=str, sigma=float, q_scatter=float, q_temp=float, init_temp=float)
+</code></pre>
+<p>The RMC class takes arguments that determine the quench rate of the error and energy constraints.</p>
+<pre><code>Experimental_G_csv: filename of experiment ePDF
+sigma: # initial value of sigma, the measure of uncertainty in ePDF data
+q_scatter: # quench rate for error constraint (rate of decreasing sigma)
+q_temp:  quench rate for energy constraint (rate of decreasing temperature)
+init_temp: initial temperature, which determines the acceptance probability based on energy constraint
+</code></pre>
+<p>To perform a simulation, use the run_rmc() method and further specify simulation parameters and constraints.</p>
+<pre><code>rmc.run_rmc(num_processes=int, initial_structure=str, keV=int, prdf_args={“bin_size:float}, transformations={“AtomHop”:{}}, validators={args}, max_steps=int)
+</code></pre>
+<p>An example for a simulation of amorphous Al2O3 is shown below:</p>
+<pre><code>from simmate.apps.epdf_rmc.rmc import RMC
+import multiprocessing
+
+if __name__ == &quot;__main__&quot;:
+
+    rmc = RMC(experimental_G_csv=&quot;al2o3_5nm_gr.txt&quot;, sigma = 0.05, q_scatter = 1, q_temp = 0.999999995, init_temp = 1000)
+    rmc.run_rmc(
+        num_processes = 8,
+        initial_structure=&quot;POSCAR_47A-d33&quot;,
+        keV=200,
+        prdf_args={&quot;bin_size&quot;: 0.04},
+        transformations={
+            # &quot;ASECoordinatePerturbation&quot;:{}, #simmate version of RattleMutation from ase, rattle_prob auto set to 0.3
+            &quot;AtomHop&quot;: {}, # consider adding a second, smaller step size &quot;max_step&quot;: 0.2
+        },
+
+        validators={
+            &quot;SlabThickness&quot;: {&quot;max_thickness&quot;: 47.4},
+            &quot;Coordination&quot;: {
+                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
+                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
+                &quot;SurfaceDistance&quot;: 5
+                }
+            },
+
+        max_steps= 1000000,
+    )
+</code></pre>
+<p>Traditional RMC simulations can also be performed with pyHRMC. It’s important to note that traditional RMC is typically less accurate than HRMC, and for this reason, we don’t recommend it. However, it can be useful in some cases, such as when a suitable force field is not available for energy calculations. 
+To run an RMC simulation (with no energy constraint):
+Required initial files:
+-   runfile.py
+-   your_epdf.gr
+-   initial_structure.vasp
+In this case, empirical structural constraints are necessary to prevent the Monte Carlo algorithm from producing unphysical configurations. Coordination and distance constraints are available under the Validators class. </p>
+<pre><code>SlabThickness
+Coordination: {
+    BulkCoordinationRange
+    SurfaceCoordinationRange
+    SurfaceDistance
+}
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/ehrhardtkm/pyHRMC" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
