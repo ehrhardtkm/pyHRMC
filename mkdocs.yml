@@ -1,4 +1,7 @@
 site_name: pyHRMC
+site_url: "https://ehrhardtkm.github.io/pyHRMC/"
+repo_url: "https://github.com/ehrhardtkm/pyHRMC"
+
 nav:
   - Home: index.md
   - About: about.md
