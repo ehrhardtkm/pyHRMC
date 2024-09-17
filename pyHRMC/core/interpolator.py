@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from simmate.apps.epdf_rmc.slab import RdfSlab
+from pyHRMC.core.slab import RdfSlab
 import numpy as np
 import pandas as pd
 import math

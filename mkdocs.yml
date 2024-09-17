@@ -1,0 +1,15 @@
+site_name: pyHRMC
+nav:
+  - Home: index.md
+  - About: about.md
+  - Installation: installation.md
+  - User Guide: 
+    - Getting started: 
+        - Required files: user_guide/getting_started/required_files.md
+        - Runfile setup: user_guide/getting_started/runfile_setup.md
+        - LAMMPS input files: user_guide/getting_started/lammps_input.md
+        - Understanding outputs: user_guide/getting_started/outputs.md
+    - Validator selection: user_guide/validator_selection.md
+    - Non-hybrid simulations: user_guide/nonhybrid_setup.md
+
+theme: readthedocs

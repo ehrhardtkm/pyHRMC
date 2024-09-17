@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#from pymatgen.analysis.elasticity.strain import Strain, convert_strain_to_deformation
-
 from simmate.toolkit import Structure
-# from simmate.toolkit.creators.vector import UniformlyDistributedVectors
 from simmate.toolkit.transformations.base import Transformation
 from copy import deepcopy
 

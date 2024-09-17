@@ -6,10 +6,10 @@ import os
 import numpy as np
 from numpy import exp
 from random import random
-from simmate.toolkit.transformations import rmc as transform_mod
-from simmate.toolkit.validators import structure as validator_mod
-from simmate.apps.epdf_rmc.slab import RdfSlab
-from simmate.apps.epdf_rmc.interpolator import CrossSection
+import pyHRMC.transformers as transform_mod
+import pyHRMC.validators as validator_mod
+from from pyHRMC.core.slab import RdfSlab
+from pyHRMC.core.interpolator import CrossSection
 # from simmate.apps.epdf_rmc.hrmc import Lammps_HRMC
 import lammps
 import multiprocessing

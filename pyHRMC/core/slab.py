@@ -5,7 +5,7 @@ import pandas as pd
 import itertools
 from scipy.ndimage import gaussian_filter1d, zoom
 from simmate.toolkit import Structure
-from simmate.toolkit.rmc_rdf import PartialRadialDistributionFunction
+from pyHRMC.core.rmc_rdf import PartialRadialDistributionFunction
 from pymatgen.analysis.bond_valence import BVAnalyzer
 import matplotlib.pyplot as plt
 import re
