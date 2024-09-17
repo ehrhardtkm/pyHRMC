@@ -18,6 +18,7 @@ class RdfSlab(Structure):
     """
     
     @property
+    #BUG: make general
     def store_symbol(structure):
         dict = {8: 'O', 13:'Al'}
         el_list= [dict[structure.atomic_numbers[0]]]
@@ -40,8 +41,10 @@ class RdfSlab(Structure):
         max_z = max([coords[2] for coords in self.cart_coords])
         min_z = min([coords[2] for coords in self.cart_coords])
         thickness = max_z - min_z
-        # center = (max_z + min_z) / 2  # is this ever used?
-        return {"min_z": min_z, "max_z": max_z, "thickness": thickness}
+        if self.lattice.abc[2] - thickness >= 1:
+            return {"min_z": min_z, "max_z": max_z, "thickness": thickness}
+        else: 
+            return None
 
     @property
     def slab_volume(self):
@@ -57,7 +60,10 @@ class RdfSlab(Structure):
 
         a = self.lattice.matrix[0]
         b = self.lattice.matrix[1]
-        c = [0, 0, self.thickness_z['thickness']]
+        if self.thickness_z is None:
+            c = self.lattice.matrix[2]
+        else:
+            c = [0, 0, self.thickness_z['thickness']]
         volume = np.dot(np.cross(a, b), c)
 
         return volume
@@ -76,7 +82,7 @@ class RdfSlab(Structure):
     def move_indices(self, move_indices):
         self.move_indices = move_indices
 
-
+    #BUG: make general
     def oxidation_state_list(structure):
         # BV = BVAnalyzer()
         # breakpoint()

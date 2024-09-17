@@ -13,7 +13,7 @@ from collections import namedtuple
 NNData= namedtuple("NNData", ["all_nninfo", "cn_weights", "cn_nninfo"])
 
 class Coordination(Validator):
-    def __init__(self, BulkCoordinationRange, SurfaceCoordinationRange, SurfaceDistance):
+    def __init__(self, BulkCoordinationRange, SurfaceCoordinationRange=None, SurfaceDistance=None):
             self.coordination = BulkCoordinationRange
             self.surface_coordination = SurfaceCoordinationRange
             self.surface_distance = SurfaceDistance
@@ -494,19 +494,28 @@ class Coordination(Validator):
             element_list,distance_list,el,coordination_number,neighbor_list = self.get_coordination(move_images, voro, sliced_df, points, struct)            
             
             # check if the atom is near a surface
-            if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
-                struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
-                
-                cn_constraints = self.surface_coordination[el]
-                for el_nn in cn_constraints: 
-                    el_cn = len([nn for nn in element_list if nn == el_nn])
-                    if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
-                        pass
-                        #print(f'pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
-                    else:
-                        #print(f'fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
-                        return False
-            else:
+            if self.surface_coordination is not None:
+                if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
+                    struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
+                    
+                    cn_constraints = self.surface_coordination[el]
+                    for el_nn in cn_constraints: 
+                        el_cn = len([nn for nn in element_list if nn == el_nn])
+                        if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
+                            pass
+                            #print(f'pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
+                        else:
+                            #print(f'fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
+                            return False
+                else:
+                    cn_constraints = self.coordination[el]
+                    for el_nn in cn_constraints: 
+                        el_cn = len([nn for nn in element_list if nn == el_nn])
+                        if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                            pass
+                        else:
+                            return False
+            elif self.surface_coordination is None:
                 cn_constraints = self.coordination[el]
                 for el_nn in cn_constraints: 
                     el_cn = len([nn for nn in element_list if nn == el_nn])
@@ -521,17 +530,26 @@ class Coordination(Validator):
                 element_list,distance_list,el,coordination_number,neighbor_list = self.get_coordination([neighbor], voro, sliced_df, points, struct)
                 
                 # check if the atom is near a surface
-                if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
-                    struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
-                    
-                    cn_constraints = self.surface_coordination[el]
-                    for el_nn in cn_constraints: 
-                        el_cn = len([nn for nn in element_list if nn == el_nn])
-                        if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
-                            pass
-                        else:
-                            return False
-                else:
+                if self.surface_coordination is not None:
+                    if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
+                        struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
+                        
+                        cn_constraints = self.surface_coordination[el]
+                        for el_nn in cn_constraints: 
+                            el_cn = len([nn for nn in element_list if nn == el_nn])
+                            if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
+                                pass
+                            else:
+                                return False
+                    else:
+                        cn_constraints = self.coordination[el]
+                        for el_nn in cn_constraints: 
+                            el_cn = len([nn for nn in element_list if nn == el_nn])
+                            if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                                pass
+                            else:
+                                return False
+                elif self.surface_coordination is None:
                     cn_constraints = self.coordination[el]
                     for el_nn in cn_constraints: 
                         el_cn = len([nn for nn in element_list if nn == el_nn])
@@ -539,5 +557,4 @@ class Coordination(Validator):
                             pass
                         else:
                             return False
-
         return True
