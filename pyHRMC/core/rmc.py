@@ -8,7 +8,7 @@ from numpy import exp
 from random import random
 import pyHRMC.transformers as transform_mod
 import pyHRMC.validators as validator_mod
-from from pyHRMC.core.slab import RdfSlab
+from pyHRMC.core.slab import RdfSlab
 from pyHRMC.core.interpolator import CrossSection
 # from simmate.apps.epdf_rmc.hrmc import Lammps_HRMC
 import lammps
@@ -17,6 +17,7 @@ from multiprocessing.shared_memory import SharedMemory
 import copy
 from itertools import combinations
 import pickle
+import warnings
 
 from pymatgen.io.lammps.data import LammpsData
 import multiprocessing
@@ -250,18 +251,41 @@ class RMC():
         max_steps= 100,
     ):
     
-        if os.path.exists("errors.txt"):
-            os.remove("errors.txt")
-        if os.path.exists("XDATCAR"):
-            os.remove("XDATCAR")
-        if os.path.exists("acceptance_probabilities.txt"):
-            os.remove("acceptance_probabilities.txt")         
+        if os.path.exists("last_step.txt") and os.path.exists("error_plotting.txt"):
+            with open("last_step.txt", 'r') as file:
+                restart_s_step = int(file.read())
+                self.s_step = restart_s_step
+
+            with open('error_plotting.txt', 'r') as file:
+                lines = file.readlines()
+                last_line = lines[-1].strip()
+                variables = last_line.split()
+                self.nsteps = int(variables[0])
+                self.batched_error_constant = float(variables[3])
+                self.batched_temp = float(variables[4])
+
+            warnings.warn(
+                "A previous run has been detected. The simulation will resume at:\n"
+                f"{self.nsteps} steps\n"
+                "pyHRMC will automatically append the output of this run to existing output files.\n"
+                "If this is in error, please remove the existing file and restart the simulation.")
+
+            if not os.path.exists("errors.txt"):
+                warnings.warn(
+                    "errors.txt is missing.")
+            if os.path.exists("XDATCAR"):
+                warnings.warn(
+                    "XDATCAR is missing.")
+            if os.path.exists("acceptance_probabilities.txt"):
+                warnings.warn(
+                    "acceptance_probabilities is missing.")
+            
+
 
         
         """
         STAGING
         """
-        # nsteps = 0
         
         #energy weighting staging
         final_temp = 100
@@ -298,6 +322,7 @@ class RMC():
         initial_structure.xyz_df = initial_structure.xyz()
         #create neighborlist
         initial_structure_neighborlist = initial_structure.get_all_neighbors(r=10.0)
+        num_atoms = range(len(initial_structure.structure.sites))
         
         #cache/store interpolated radii
         struct_consts = CrossSection(initial_structure)
@@ -377,7 +402,9 @@ class RMC():
                 # if os.path.exists("errors.png"):
                 #     os.remove("errors.png") 
                 current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)
-                # current_structure.plot_error()
+                with open("pdf.txt", "w") as file:
+                    pdf = current_structure.full_pdf_G(current_structure_neighborlist)
+                    file.write(pdf)
     
             # TODO apply with validation
             transformer = transformation_objects[0]  # just grab the first transformation
@@ -446,11 +473,10 @@ class RMC():
                 with open('errors.txt', 'a') as out:
                     out.write(f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n")
                 with open('error_plotting.txt', 'a') as out:
-                    out.write(f'{self.nsteps} {new_error} {new_energy} {self.batched_error_constant} {self.batched_temp} {max_unc}\n')
+                    out.write(f'{self.nsteps} {new_error} {new_energy/num_atoms} {self.batched_error_constant} {self.batched_temp} {max_unc}\n')
                 frame_num = len(error_list)
                 current_structure.write_xdatcar(frame_num)
 
-                
                 counter.append(self.nsteps)
             
             #quenching scheme                
