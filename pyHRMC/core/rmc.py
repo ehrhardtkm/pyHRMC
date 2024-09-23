@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-
-error_list = []
-
 import os
 import numpy as np
 from numpy import exp
@@ -10,8 +7,8 @@ import pyHRMC.transformers as transform_mod
 import pyHRMC.validators as validator_mod
 from pyHRMC.core.slab import RdfSlab
 from pyHRMC.core.interpolator import CrossSection
-# from simmate.apps.epdf_rmc.hrmc import Lammps_HRMC
-import lammps
+from pyHRMC.core.hrmc import Lammps_HRMC
+
 import multiprocessing
 from multiprocessing.shared_memory import SharedMemory
 import copy
@@ -19,119 +16,12 @@ from itertools import combinations
 import pickle
 import warnings
 
-from pymatgen.io.lammps.data import LammpsData
-import multiprocessing
 from pymatgen.core import Structure
-import lammps
-from lammps import LAMMPS_INT, LMP_STYLE_GLOBAL
-from lammps import PyLammps
-from pymatgen.io.ase import AseAtomsAdaptor
-from ase.io import write
-
-
-
-
-
-
-class Lammps_HRMC():
-    def __init__(self, lmp_file, task_id):
-        self.lmp = lammps.lammps(cmdargs=["-log", "none", "-screen", "none",  "-nocite"])
-        self.lmp_file = lmp_file
-        self.task_id = task_id
-
-
-    def lammps_file(self, structure):
-        atoms = AseAtomsAdaptor.get_atoms(structure)
-        filename = f'{self.task_id}.lmp'
-        write(filename, atoms,  format="lammps-data", specorder=["Al", "O"])
-    
-        # lammps = LammpsData.from_structure(structure)
-        # #need a lock here
-        # filename = f'{self.task_id}.lmp'
-        # lammps.write_file(filename)
-         
-    def simple_lmp(self, structure):
-        self.lammps_file(structure)
-    
-        for line in self.lmp_file:
-            if line.startswith('read_data'):            
-                self.lmp.command(f'read_data {self.task_id}.lmp')
-            else:
-                self.lmp.command(line)
-        '''
-        alternative is to overwrite the in.lmp copy somewhere and then read that in with lmp.file()
-        '''
-    
-    
-        # lmp = lammps.lammps(cmdargs=["-log", "none", "-screen", "none",  "-nocite"])
-        # lmp.file('in.lmp')
-        # lmp.command("variable e equal pe")
-        self.lmp.close()
-        return
-    
-    
-    def lammps_energy(self, structure, nsteps, s_step):
-        """
-        #Create lammps file
-        self.lammps_file(structure)
-        
-        # Initialize LAMMPS instance
-        # lmp = lammps.lammps(cmdargs=["-log", "none", "-screen", "none",  "-nocite"])
-        lmp = PyLammps(cmdargs=["-log", "none", "-screen", "none",  "-nocite"])
-        # lmp = lammps.lammps()
-        
-        # # lines = open('in.lmp','r').readlines()
-        # # for line in lines: lmp.command(line)
-        # lmp.file('in.lmp')
-        
-        
-        """
-        max_unc = 0
-        self.lammps_file(structure)
-        if nsteps != 0:
-            for line in self.lmp_file:
-                if line.startswith('read_data'):            
-                    self.lmp.command(f'read_data {self.task_id}.lmp')
-                elif line.startswith('reset_timestep'):
-                    self.lmp.command(f'variable last_step equal {s_step}')
-                    self.lmp.command(line)
-                else:
-                    self.lmp.command(line)
-        elif nsteps == 0:
-              for line in self.lmp_file:
-                if line.startswith('read_data'):            
-                    self.lmp.command(f'read_data {self.task_id}.lmp')
-                else:
-                    self.lmp.command(line)
-    
-    
-        if nsteps % 100 == 0:
-        # unc = self.lmp.extract_atom('c_unc')
-            max_unc = self.lmp.extract_compute('MaxUnc', 0,0)
-            
-        self.lmp.command("variable e equal pe")
-
-        
-        self.lmp.command("run 0")
-        
-
-        
-        #natoms = lmp.extract_global("natoms")
-        #energy = lmp.extract_compute("thermo_pe",LMP_STYLE_GLOBAL,LAMMPS_INT) / natoms
-        #energy = self.lmp.extract_compute("thermo_pe")
-        energy = self.lmp.extract_compute("thermo_pe",LMP_STYLE_GLOBAL,LAMMPS_INT)
-        # energy = energy / (6.23 * 10**23) * (2.611 * 10 **22) * 600
-        #energy_atom = energy / natoms
-        pe = round(energy, 5) 
-
-        # Clean up
-        self.lmp.close() 
-        return pe, max_unc
-
 
 class RMC():
       
-    def __init__(self,experimental_G_csv, sigma, q_scatter, q_temp, init_temp):
+    def __init__(self, experimental_G_csv, sigma, q_scatter, q_temp = None, init_temp=None, hybrid=True):
+        self.hybrid = hybrid
         self.experimental_G_csv = experimental_G_csv
         self.batched_error_constant = sigma
         self.batched_temp = init_temp
@@ -140,7 +30,13 @@ class RMC():
         self.q_temp = q_temp
         self.q_scatter = q_scatter
         self.nsteps = 0
-        self.s_step = 0
+        self.success_step = 0
+
+        if self.hybrid == True and self.q_temp == None or self.batched_temp == None:
+            raise RuntimeError(
+                "If running HRMC, please provide values for q_temp and init_temp.\n"
+                "If running RMC, specify that hybrid == False\n"
+            )
     
     def apply_oxi_state(self, valences, struct):
         # BV = BVAnalyzer()
@@ -151,7 +47,7 @@ class RMC():
     
     
     #generate and check function to parallelize
-    def make_candidate_structure(self, current_structure, validator_objects, transformer, lmp_input, task_id):
+    def make_candidate_structure(self, current_structure, validator_objects, transformer, task_id, lmp_input=None):
         new_structure = transformer.apply_transformation(current_structure)
         new_structure.xyz_df = new_structure.xyz()
     
@@ -165,47 +61,82 @@ class RMC():
         else:
             #  do pdf error check
             neighborlist = new_structure.get_all_neighbors(r=10.0)
-            keep_new, new_error, max_unc = self.choose_acceptance("single", new_structure, neighborlist,self.batched_error_constant, self.batched_temp, lmp_input, task_id)
+            if self.hybrid == True:
+                keep_new, new_error, max_unc = self.choose_acceptance("single", new_structure, neighborlist,self.batched_error_constant, self.batched_temp, lmp_input, task_id)
+            else:
+                keep_new = self.choose_acceptance("single", new_structure, neighborlist,self.batched_error_constant)
             if keep_new:
                 pass
             else:
                 new_structure = False
         return new_structure
       
-    def choose_acceptance(self, version, structure, neighborlist, error_constant, temp, lmp_input, task_id):
-        #HRMC
-        lammps_run = Lammps_HRMC(lmp_input, task_id)
-        new_energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.s_step)
+    def choose_acceptance(self, version, structure, neighborlist, error_constant, temp=None, lmp_input=None, task_id=None):
+        max_unc = 0
+        if self.hybrid == True:
+            #HRMC
+            lammps_run = Lammps_HRMC(lmp_input, task_id)
+            new_energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step)
         
         structure.load_experimental_from_file(self.experimental_G_csv)
         new_error,slope = structure.prdf_error(neighborlist)
         
         keep_new = True
-        if new_error < self.current_error and new_energy <= self.current_energy:
-            # accept new structure
-            with open('acceptance_probabilities.txt', 'a') as out:
-                out.write(f'{version}: {keep_new}, n/a, {new_error}, {new_energy}\n')
-            pass
+
+        """
+        REORGANIZE TO BE BASED ON IF HBRID == TRUE
+        """
+
+
+
+        if new_error < self.current_error: 
+            if self.hybrid == True:
+                if new_energy <= self.current_energy:
+                    # accept new structure
+                    with open('acceptance_probabilities.txt', 'a') as out:
+                        out.write(f'{version}: {keep_new}, n/a, {new_error}, {new_energy}\n')
+                    pass
+                elif new_energy > self.current_energy:
+                    # HRMC, with energy term
+                    new_h_error = ( new_error / (error_constant ** 2) ) +  ( new_energy / ((1.987204259 * 10**-3) * temp) )
+                    old_h_error = ( self.current_error / (error_constant ** 2) ) +  ( self.current_energy / ((1.987204259 * 10**-3) * temp) )
+                    h_prob = exp(old_h_error - new_h_error)
+                    if random() < h_prob:
+                        pass
+                    else:
+                        keep_new = False
+                    #logging probability info for record keeping
+                    with open('acceptance_probabilities.txt', 'a') as out:
+                        out.write(f'{version}: {keep_new}, {h_prob}, {new_error}, {new_energy}\n')
+                return keep_new, new_error, max_unc
+            #RMC
+            elif self.hybrid == False:
+                # accept new structure
+                with open('acceptance_probabilities.txt', 'a') as out:
+                    out.write(f'{version}: {keep_new}, n/a, {new_error}\n')
+                return keep_new, new_error
+
         else:
-            # HRMC, with energy term
-            
-            new_h_error = ( new_error / (error_constant ** 2) ) +  ( new_energy / ((1.987204259 * 10**-3) * temp) )
-            old_h_error = ( self.current_error / (error_constant ** 2) ) +  ( self.current_energy / ((1.987204259 * 10**-3) * temp) )
-            
-            h_prob = exp(old_h_error - new_h_error)
-            
-            # probability = exp(
-            #     (-1 * (abs(new_error - self.current_error)) / error_constant) + ((-1) * ((new_energy - self.current_energy) / ( (1.987204259 * 10**-3) * temp))) 
-            # )
-            #if random() < probability:
-            if random() < h_prob:
-                pass
-            else:
-                keep_new = False
-            #logging probability info for record keeping
-            with open('acceptance_probabilities.txt', 'a') as out:
-                out.write(f'{version}: {keep_new}, {h_prob}, {new_error}, {new_energy}\n')
-        return keep_new, new_error, max_unc
+            if self.hybrid == True:
+                # HRMC, with energy term
+                new_h_error = ( new_error / (error_constant ** 2) ) +  ( new_energy / ((1.987204259 * 10**-3) * temp) )
+                old_h_error = ( self.current_error / (error_constant ** 2) ) +  ( self.current_energy / ((1.987204259 * 10**-3) * temp) )
+                h_prob = exp(old_h_error - new_h_error)
+                if random() < h_prob:
+                    pass
+                else:
+                    keep_new = False
+                #logging probability info for record keeping
+                with open('acceptance_probabilities.txt', 'a') as out:
+                    out.write(f'{version}: {keep_new}, {h_prob}, {new_error}, {new_energy}\n')
+                return keep_new, new_error, max_unc
+            elif self.hybrid == False:
+                probability = exp(-1 * (abs(new_error - self.current_error)) / error_constant)
+                if random() < probability:
+                    pass
+                else:
+                    keep_new = False
+                return keep_new, new_error
       
         # neighborlist update with custom approach. then do pdf error check. use __init__ for experimental_G_csv. Then use probability and return true or False 
     def update_neighbors(self, shm_name, size, n_idx):
@@ -226,7 +157,7 @@ class RMC():
           
     def worker_task(self, structure, lmp_input, task_id):
         lammps_run = Lammps_HRMC(lmp_input, task_id)
-        energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.s_step)
+        energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step)
         return energy, max_unc     
           
     def run_rmc(self,
@@ -250,19 +181,39 @@ class RMC():
         
         max_steps= 100,
     ):
-    
-        if os.path.exists("last_step.txt") and os.path.exists("error_plotting.txt"):
-            with open("last_step.txt", 'r') as file:
-                restart_s_step = int(file.read())
-                self.s_step = restart_s_step
 
-            with open('error_plotting.txt', 'r') as file:
-                lines = file.readlines()
-                last_line = lines[-1].strip()
-                variables = last_line.split()
-                self.nsteps = int(variables[0])
-                self.batched_error_constant = float(variables[3])
-                self.batched_temp = float(variables[4])
+        if os.path.exists("error_plotting.txt"):
+            if self.hybrid == True:
+                try:
+                    with open("last_step.txt", 'r') as file:
+                        restart_success_step = int(file.read())
+                        self.success_step = restart_success_step
+                except IndexError:
+                    raise RuntimeError(
+                        "You're likely trying to restart a simulation and switch between hybrid and non-hybrid RMC."
+                        "Please change your runfile.py settings for the same type of simulation as previously."
+                    )
+
+                with open('error_plotting.txt', 'r') as file:
+                    lines = file.readlines()
+                    last_line = lines[-1].strip()
+                    variables = last_line.split()
+                    self.nsteps = int(variables[0])
+                    try:
+                        self.batched_error_constant = float(variables[3])
+                        self.batched_temp = float(variables[4])
+                    except IndexError:
+                        raise RuntimeError(
+                            "You're likely trying to restart a simulation and switch between hybrid and non-hybrid RMC.\n"
+                            "Please change your runfile.py settings for the same type of simulation as previously."
+                        )
+            elif self.hybrid == False:
+                with open('error_plotting.txt', 'r') as file:
+                    lines = file.readlines()
+                    last_line = lines[-1].strip()
+                    variables = last_line.split()
+                    self.nsteps = int(variables[0])
+                    self.batched_error_constant = float(variables[2])
 
             warnings.warn(
                 "A previous run has been detected. The simulation will resume at:\n"
@@ -299,30 +250,31 @@ class RMC():
         """
         INITIAL STRUCTURE AND CALCULATION SETUP
         """
-        #lammps input setup
-        lmp_init_in = []    
-        with open(lmp_init, 'r') as file:
-            for line in file:
-                lmp_init_in.append(line)
+
+        if self.hybrid == True:
+            #lammps input setup
+            lmp_init_in = []    
+            with open(lmp_init, 'r') as file:
+                for line in file:
+                    lmp_init_in.append(line)
+                    
+            lmp_input = []    
+            with open(lmp_test, 'r') as file:
+                for line in file:
+                    lmp_input.append(line)
+                    
+            lmp_acc_in = []    
+            with open(lmp_accept, 'r') as file:
+                for line in file:
+                    lmp_acc_in.append(line)
                 
-        lmp_input = []    
-        with open(lmp_test, 'r') as file:
-            for line in file:
-                lmp_input.append(line)
                 
-        lmp_acc_in = []    
-        with open(lmp_accept, 'r') as file:
-            for line in file:
-                lmp_acc_in.append(line)
-                
-                
-        
         # convert to our python class
         initial_structure = RdfSlab.from_file(initial_structure)
         initial_structure.xyz_df = initial_structure.xyz()
         #create neighborlist
         initial_structure_neighborlist = initial_structure.get_all_neighbors(r=10.0)
-        num_atoms = range(len(initial_structure.structure.sites))
+        num_atoms = len(initial_structure.sites)
         
         #cache/store interpolated radii
         struct_consts = CrossSection(initial_structure)
@@ -372,21 +324,18 @@ class RMC():
         current_structure = copy.deepcopy(initial_structure)
         current_structure_neighborlist = initial_structure_neighborlist
         self.current_error,slope = current_structure.prdf_error(current_structure_neighborlist)
-        default_id = 100
-        #Start HRMC
-        initial_e, max_unc = self.worker_task(initial_structure, lmp_init_in, default_id)
-        # lammps_run = Lammps_HRMC()
-        # current_energy = lammps_run.lammps_energy(current_structure)
-        # del lammps_run
-        # lammps_run.close()
-        
-        self.current_energy = initial_e
-        
-        
-        # nsteps = 0
         current_e = round(self.current_error, 5)
-        print(f'Step {self.nsteps}. Sum of residuals = {current_e}. Energy = {self.current_energy}.')
+        #additional steps to initialize HRMC
+        if self.hybrid == True:
+            default_id = 100
+            initial_e, max_unc = self.worker_task(initial_structure, lmp_init_in, default_id)
+            self.current_energy = initial_e
+            print(f'Step {self.nsteps}. Sum of residuals = {current_e}. Energy = {self.current_energy}.')
+        else:
+            print(f'Step {self.nsteps}. Sum of residuals = {current_e}.')
+        
         counter = []
+        error_list = []
         moves = 0
         moves_attempted = 0
         
@@ -399,23 +348,22 @@ class RMC():
             if self.nsteps % 5000 == 0:
                 if os.path.exists("pdfs.png"):
                     os.remove("pdfs.png") 
-                # if os.path.exists("errors.png"):
-                #     os.remove("errors.png") 
                 current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)
                 with open("pdf.txt", "w") as file:
                     pdf = current_structure.full_pdf_G(current_structure_neighborlist)
                     file.write(pdf)
     
-            # TODO apply with validation
             transformer = transformation_objects[0]  # just grab the first transformation
             
             trial_structure = copy.deepcopy(current_structure)
-            
             new_structure = copy.deepcopy(current_structure)
             
             with multiprocessing.Pool(processes=num_processes) as pool:
                 tasks = list(range(num_batch))
-                inputs = [(trial_structure, validator_objects, transformer, lmp_input, task_id) for task_id in tasks]
+                if self.hybrid == True:
+                    inputs = [(trial_structure, validator_objects, transformer, task_id, lmp_input) for task_id in tasks]
+                else:
+                    inputs = [(trial_structure, validator_objects, transformer, task_id) for task_id in tasks]
                 results = pool.starmap(self.make_candidate_structure, inputs)
                                 
             moves_attempted += num_batch       
@@ -448,43 +396,54 @@ class RMC():
             for c_idx, c_site in moved_atoms:
                 new_structure.sites[c_idx] = c_site
             #edit neighbor list here
+            #BUG: switch to individuvudal neighbor method for speedup
             new_structure_neighborlist = new_structure.get_all_neighbors(r=10.0)
             #update xyz_df
             new_structure.xyz_df = new_structure.xyz()
             
-            
-            keep_new, new_error, max_unc = self.choose_acceptance("batch", new_structure, new_structure_neighborlist, self.batched_error_constant, self.batched_temp, lmp_input, default_id)
+            if self.hybrid == True:
+                keep_new, new_error, max_unc = self.choose_acceptance("batch", new_structure, new_structure_neighborlist, self.batched_error_constant, self.batched_temp, lmp_input, default_id)
+            else: 
+                keep_new, new_error = self.choose_acceptance("batch", new_structure, new_structure_neighborlist, self.batched_error_constant)
 
             if keep_new:
-                self.s_step += 1
-                
-                new_energy, max_unc = self.worker_task(new_structure, lmp_acc_in, default_id)
-                new_energy = round(new_energy, 5)
+                self.success_step += 1
                 new_error = round(new_error, 7)
-                
-                print(f'Step {self.nsteps}. Accepted, sum of residuals = {new_error}.  Energy = {new_energy}')
+                self.current_error = new_error
+                error_list.append(f'{self.nsteps},{new_error}')
+                moves += len(moved_atoms)
+
+                if self.hybrid == True:
+                    new_energy, max_unc = self.worker_task(new_structure, lmp_acc_in, default_id)
+                    new_energy = round(new_energy, 5)
+                    self.current_energy = new_energy
+                    print(f'Step {self.nsteps}. Accepted, sum of residuals = {new_error}.  Energy = {new_energy}')
+                    with open('errors.txt', 'a') as out:
+                        out.write(f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n")
+                    with open('error_plotting.txt', 'a') as out:
+                        out.write(f'{self.nsteps} {new_error} {new_energy/num_atoms} {self.batched_error_constant} {self.batched_temp} {max_unc}\n')
+                else:
+                    print(f'Step {self.nsteps}. Accepted, sum of residuals = {new_error}.')
+                    with open('errors.txt', 'a') as out:
+                        out.write(f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n")
+                    with open('error_plotting.txt', 'a') as out:
+                        out.write(f'{self.nsteps} {new_error} {self.batched_error_constant}\n')
+
                 current_structure = copy.deepcopy(new_structure)                    
                 current_structure_neighborlist = current_structure.get_all_neighbors(r=10.0)
-                self.current_error = new_error
-                self.current_energy = new_energy
-                error_list.append(f'{self.nsteps},{new_error}')
                 current_structure.to(fmt='POSCAR', filename='output.vasp')
-                moves += len(moved_atoms)
-                with open('errors.txt', 'a') as out:
-                    out.write(f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n")
-                with open('error_plotting.txt', 'a') as out:
-                    out.write(f'{self.nsteps} {new_error} {new_energy/num_atoms} {self.batched_error_constant} {self.batched_temp} {max_unc}\n')
                 frame_num = len(error_list)
                 current_structure.write_xdatcar(frame_num)
-
+    
                 counter.append(self.nsteps)
-            
-            #quenching scheme                
-            if self.batched_temp > final_temp:
-                self.batched_temp = self.batched_temp * self.q_temp ** ( (self.nsteps * num_processes) / 1000000 )
-            self.batched_error_constant = self.batched_error_constant *  self.q_scatter ** ( ( (self.nsteps * num_processes) / 1000000 ) / 2)
-            #use this line to change the number in a batch. need rounding to return an integer value
-            # num_batch = round(num_batch * batch_decay)
+
+            if self.hybrid == True:
+                #quenching scheme                
+                if self.batched_temp > final_temp:
+                    self.batched_temp = self.batched_temp * self.q_temp ** ( (self.nsteps * num_processes) / 1000000 )
+                self.batched_error_constant = self.batched_error_constant *  self.q_scatter ** ( ( (self.nsteps * num_processes) / 1000000 ) / 2)
+                #use this line to change the number in a batch. need rounding to return an integer value
+                # num_batch = round(num_batch * batch_decay)
             
         output_structure = current_structure
         output_structure.to(fmt='POSCAR', filename='output.vasp')
