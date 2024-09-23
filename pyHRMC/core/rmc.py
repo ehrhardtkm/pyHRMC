@@ -338,20 +338,21 @@ class RMC():
         error_list = []
         moves = 0
         moves_attempted = 0
+
+        current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)
         
         """
         RUN RMC LOOP
         """
         while self.nsteps < max_steps:
             self.nsteps += 1
-        
             if self.nsteps % 5000 == 0:
                 if os.path.exists("pdfs.png"):
                     os.remove("pdfs.png") 
                 current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)
-                with open("pdf.txt", "w") as file:
-                    pdf = current_structure.full_pdf_G(current_structure_neighborlist)
-                    file.write(pdf)
+                # with open("pdf.txt", "w") as file:
+                #     pdf = current_structure.full_pdf_G(current_structure_neighborlist)
+                #     file.write(pdf)
     
             transformer = transformation_objects[0]  # just grab the first transformation
             

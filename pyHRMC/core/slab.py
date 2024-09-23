@@ -340,12 +340,16 @@ class RdfSlab(Structure):
         self.full_pdf_G_scaled = calc_scaled
         exp[:zero_until] = zero_array
         
-        plt.plot(r, exp, label="experiment")
+        plt.plot(r, exp, label=f"{file_name}")
         plt.plot(r,  calc_scaled, label="calculated")
         plt.legend()
         plt.savefig("pdfs.png")
         plt.show()
-        
+
+        with open("pdf.txt", 'w') as file:
+            file.write(f"{' '.join(map(str, r))} \n{' '.join(map(str, calc_scaled))}\n")
+
+        return             
 
     def plot_error(self):
         try:
