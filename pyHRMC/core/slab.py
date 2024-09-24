@@ -16,25 +16,6 @@ class RdfSlab(Structure):
 
     The slab must be orthogonal to the z axis.
     """
-    
-    @property
-    #BUG: make general
-    def store_symbol(structure):
-        dict = {8: 'O', 13:'Al'}
-        el_list= [dict[structure.atomic_numbers[0]]]
-        el_switch = []
-        j=0
-
-        for i in range(len(structure.sites)):
-            # BUG: make dictionary that stores atomic number as key and element label string and item
-    #            symbol_list.append = dict[self.atomic_numbers[i]]
-    #            symbol_list.append = str(self.atomic_numbers[i])
-            if  structure.atomic_numbers[i] != structure.atomic_numbers[j]:
-                el_switch.append(i)
-                el_list.append(dict[structure.atomic_numbers[i]])
-            j=i
-        return el_switch, el_list
-
 
     @property
     def thickness_z(self):
@@ -82,23 +63,13 @@ class RdfSlab(Structure):
     def move_indices(self, move_indices):
         self.move_indices = move_indices
 
-    #BUG: make general
     def oxidation_state_list(structure):
-        # BV = BVAnalyzer()
-        # breakpoint()
-        # valences = BV.get_valences(structure)
-        valences = []
-        for site in structure:
-            if site.species_string == "Al":
-                valences.append(3)
-            elif site.species_string == "O":
-                valences.append(-2)
+        BV = BVAnalyzer()
+        valences = BV.get_valences(structure)
         return valences
     
     @property
     def apply_oxi_state(self):
-        # BV = BVAnalyzer()
-        # valences = BV.get_valences(self)
         for i in range(len(self.sites)):
             self.sites[i].oxi_state = self.valences[i]
         return
@@ -214,9 +185,12 @@ class RdfSlab(Structure):
         
         # OPTIMIZE: consider caching the creation/fitting of this class because
         # it never changes. (i.e move it to a separate method and use @cached_property)
+
         prdf_maker = PartialRadialDistributionFunction(
             cutoff=10,
             bin_size=0.04,
+            el_switch=self.el_switch,
+            el_list=self.el_list
         )
         prdf_maker.fit([self])
 
@@ -244,7 +218,7 @@ class RdfSlab(Structure):
 
         # cutoff=10, bin_size=0.04 is hardcoded above --> array size will
         # always be 250.
-        g = np.zeros(250)  # Why was numpy.double used before...?
+        g = np.zeros(250) 
         for pair in self.element_pairs:
             rdf = rdfs_dict[pair]
             weight = weighting_dict[pair]

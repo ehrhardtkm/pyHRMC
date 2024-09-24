@@ -13,6 +13,7 @@ import numpy as np
 from pymatgen.core.periodic_table import Element, Specie
 
 from matminer.featurizers.base import BaseFeaturizer
+import bisect
 
 
 class PartialRadialDistributionFunction(BaseFeaturizer):
@@ -40,9 +41,11 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
 
     """
 
-    def __init__(self, cutoff=10.0, bin_size=0.1, include_elems=(), exclude_elems=()):
+    def __init__(self, cutoff=10.0, bin_size=0.1, el_switch=[], el_list=[],include_elems=(), exclude_elems=()):
         self.cutoff = cutoff
         self.bin_size = bin_size
+        self.el_switch = el_switch
+        self.el_list = el_list
         self.elements_ = None
         self.include_elems = list(include_elems)  # Makes sure the element lists are ordered
         self.exclude_elems = list(exclude_elems)
@@ -143,22 +146,14 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
             
     
         def get_symbol(s, site):
-            el_switch = 240
-            el_list =  ['Al', 'O']
-            # el_switch = s.store_symbol[0][0]
-            # el_list = s.store_symbol[1]
-            # for i in range(len(el_switch)):
-            if site < el_switch:
-                return el_list[0]
-            return el_list[1]
-    
+            idx = bisect.bisect_right(self.el_switch, site)
+            return self.el_list[idx]
+
         for site, nlst in zip(enumerate(s.sites), neighbors_lst):  # Each list is a list for each site
             my_elem = get_symbol(s, site[0])
             for neighbor in nlst:
-                # breakpoint()
                 rij = neighbor[1]
                 n_elem = get_symbol(s, neighbor.index)
-                # LW 3May17: Any better ideas than appending each element at a time?
                 distances_by_type[(my_elem, n_elem)].append(rij)
     
         # Compute and normalize the prdfs

@@ -15,7 +15,6 @@ import copy
 from itertools import combinations
 import pickle
 import warnings
-
 from pymatgen.core import Structure
 
 class RMC():
@@ -160,6 +159,18 @@ class RMC():
         energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step)
         return energy, max_unc     
           
+
+    def store_symbol(self, structure):
+        el_switch = []
+        j=0
+        el_list= [structure.sites[0].specie.symbol]
+        for i in range(len(structure.sites)):
+            if  structure.atomic_numbers[i] != structure.atomic_numbers[j]:
+                el_switch.append(i)
+                el_list.append(structure.sites[i].specie.symbol)
+            j=i
+        return el_switch, el_list
+    
     def run_rmc(self,
         num_processes = int(),
         initial_structure="amorphous_al2o3.vasp",
@@ -216,10 +227,10 @@ class RMC():
                     self.batched_error_constant = float(variables[2])
 
             warnings.warn(
-                "A previous run has been detected. The simulation will resume at:\n"
+                "\nA previous run has been detected. The simulation will resume at:\n"
                 f"{self.nsteps} steps\n"
                 "pyHRMC will automatically append the output of this run to existing output files.\n"
-                "If this is in error, please remove the existing file and restart the simulation.")
+                "If this is undesired, please remove the existing file and restart the simulation.")
 
             if not os.path.exists("errors.txt"):
                 warnings.warn(
@@ -278,7 +289,7 @@ class RMC():
         
         #cache/store interpolated radii
         struct_consts = CrossSection(initial_structure)
-        
+
         valences = initial_structure.oxidation_state_list()
         self.apply_oxi_state(valences, initial_structure)
         charges = struct_consts.partial_charges()
@@ -291,8 +302,12 @@ class RMC():
         for el in el_tuple:
             el_charge = charges[el]
             TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV)
-        setattr(initial_structure, 'TCSs', TCS)
-        print(TCS)
+        
+        #BUG: FOR TROUBLEHSOOTING ONLY, FIX THIS 
+        # setattr(initial_structure, 'TCSs', TCS)
+        CROSS_SECTIONS_CONSTANTS = {'Al': 5.704193e-2, 'O': 2.029453e-2}
+        setattr(initial_structure, 'TCSs', CROSS_SECTIONS_CONSTANTS)
+        print(initial_structure.TCSs)
 
     
         # load experimental G(r)
@@ -322,6 +337,9 @@ class RMC():
         INITIALIZE RMC LOOP
         """
         current_structure = copy.deepcopy(initial_structure)
+        el_switch, el_list = self.store_symbol(current_structure)
+        current_structure.el_switch = el_switch
+        current_structure.el_list = el_list
         current_structure_neighborlist = initial_structure_neighborlist
         self.current_error,slope = current_structure.prdf_error(current_structure_neighborlist)
         current_e = round(self.current_error, 5)
@@ -350,9 +368,7 @@ class RMC():
                 if os.path.exists("pdfs.png"):
                     os.remove("pdfs.png") 
                 current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)
-                # with open("pdf.txt", "w") as file:
-                #     pdf = current_structure.full_pdf_G(current_structure_neighborlist)
-                #     file.write(pdf)
+
     
             transformer = transformation_objects[0]  # just grab the first transformation
             
@@ -418,7 +434,7 @@ class RMC():
                     new_energy, max_unc = self.worker_task(new_structure, lmp_acc_in, default_id)
                     new_energy = round(new_energy, 5)
                     self.current_energy = new_energy
-                    print(f'Step {self.nsteps}. Accepted, sum of residuals = {new_error}.  Energy = {new_energy}')
+                    print(f'Step {self.nsteps}. Accepted, sum of residuals = {new_error}.  Energy = {new_energy/num_atoms} per atom')
                     with open('errors.txt', 'a') as out:
                         out.write(f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n")
                     with open('error_plotting.txt', 'a') as out:
