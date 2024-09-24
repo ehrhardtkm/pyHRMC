@@ -4,7 +4,7 @@ import itertools
 
 import numpy
 
-from simmate.toolkit.validators.base import Validator
+from pyHRMC.validators import Validator
 
 
 class SiteDistance(Validator):

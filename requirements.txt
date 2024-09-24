@@ -1,1 +1,11 @@
-simmate
+ase==3.22.1
+lammps==2024.8.29.0.0
+matminer==0.8.0
+matplotlib==3.9.2
+numpy==1.24.1
+pandas==2.2.3
+pymatgen==2023.5.31
+pymatgen_analysis_diffusion==2023.8.15
+scikit_learn==1.2.1
+scipy==1.14.1
+setuptools==73.0.1

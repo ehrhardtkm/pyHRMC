@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from simmate.toolkit.validators import Validator
+from pyHRMC.validators import Validator
 import numpy as np
 import pandas as pd
 import math

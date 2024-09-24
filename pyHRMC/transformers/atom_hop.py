@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-
-from simmate.toolkit import Structure
-from simmate.toolkit.transformations.base import Transformation
+from pymatgen.core import Structure 
+from pyHRMC.transformers import Transformation
 from copy import deepcopy
-
+import random
 
 def xyz(structure):
     import pandas as pd
@@ -28,10 +27,6 @@ class AtomHop(Transformation):
     This will typically be about 0.2 A for the RMC process.
     """
 
-    io_scale = "one_to_one"
-    ninput = 1
-    allow_parallel = False
-
     @staticmethod
     def apply_transformation(
         structure: Structure,
@@ -39,8 +34,6 @@ class AtomHop(Transformation):
         max_attempts=100,
     ):
 
-        import random
-        # import numpy as np
 
         """ We define a cubic grid, then discard the points outside radius r"""
         """ JACK:  can we cache this so we don't have to repeatedly generate
@@ -107,17 +100,7 @@ possible pymatgen sources:
     from pymatgen.transformations.advanced_transformations import MonteCarloRattleTransformation
 """
 
-
-import random
-from pymatgen.transformations.site_transformations import TranslateSitesTransformation
-from simmate.toolkit import Structure
-from simmate.toolkit.transformations.base import Transformation
-
 class MultipleAtomHop(Transformation):
-
-    io_scale = "one_to_one"
-    ninput = 1
-    allow_parallel = False
 
     @staticmethod
     def apply_transformation(

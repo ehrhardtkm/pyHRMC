@@ -2,7 +2,7 @@
 # circular imports errors, so we prevent isort from changing this file.
 # isort: skip_file
 
-from simmate.toolkit.validators import Validator
+from .base import Validator
 from .distances_coordination import DistancesCoordination
 from .site_distance import SiteDistance, SiteDistanceMatrix
 from .slab_thickness import SlabThickness

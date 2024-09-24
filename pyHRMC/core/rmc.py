@@ -369,7 +369,7 @@ class RMC():
                     os.remove("pdfs.png") 
                 current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)
 
-    
+
             transformer = transformation_objects[0]  # just grab the first transformation
             
             trial_structure = copy.deepcopy(current_structure)

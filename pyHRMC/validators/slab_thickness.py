@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from simmate.toolkit.validators import Validator
+from pyHRMC.validators import Validator
 
 class SlabThickness(Validator):
     """
