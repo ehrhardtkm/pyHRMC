@@ -6,9 +6,13 @@ import itertools
 from scipy.ndimage import gaussian_filter1d, zoom
 from pymatgen.core import Structure
 from pyHRMC.core.rmc_rdf import PartialRadialDistributionFunction
-from pymatgen.analysis.bond_valence import BVAnalyzer
+# from pymatgen.analysis.bond_valence import BVAnalyzer
 import matplotlib.pyplot as plt
 import re
+from typing import Sequence
+from pymatgen.core.sites import PeriodicSite, Site
+from pymatgen.core.composition import Composition
+import collections
 
 class RdfSlab(Structure):
     """
@@ -64,16 +68,10 @@ class RdfSlab(Structure):
         self.move_indices = move_indices
 
     def oxidation_state_list(structure):
-        BV = BVAnalyzer()
-        valences = BV.get_valences(structure)
+        comp = structure.composition
+        val = Composition(comp)
+        valences = val.oxi_state_guesses()
         return valences
-    
-    @property
-    def apply_oxi_state(self):
-        for i in range(len(self.sites)):
-            self.sites[i].oxi_state = self.valences[i]
-        return
-
 
     def xyz(self):
         data = []
@@ -375,3 +373,56 @@ class RdfSlab(Structure):
                         if site.species_string == e:
                             out += np.array2string(site.frac_coords, suppress_small=True).replace('[', '').replace(']','')+'\n'
                 f.write(out)
+
+    # refactored version of pymatgen's get_all_neighbors method for speed up by vectorization
+    def get_all_neighbors(
+        self,
+        r: float,
+        include_index: bool = False,
+        include_image: bool = False,
+        sites: Sequence[PeriodicSite] | None = None,
+        numerical_tol: float = 1e-8,
+    ):
+       
+        if sites is None:
+            sites = self.sites
+        center_indices, points_indices, images, distances = self.get_neighbor_list(
+            r=r, sites=sites, numerical_tol=numerical_tol
+        )
+        if len(points_indices) < 1:
+            return [[]] * len(sites)
+        neighbor_dict: dict[int, list] = collections.defaultdict(list)
+        atol = Site.position_atol
+        all_sites = self.sites
+
+        #create inividual masks for each check
+        valid_neighbors_mask = distances > numerical_tol
+
+        # Apply the mask and append the valid neighbors
+        for cindex, pindex, d, is_valid in zip(center_indices, points_indices, distances, valid_neighbors_mask):
+            if is_valid:
+                neighbor_dict[cindex].append(
+                    {
+                    'nn_distance':d,
+                    'index':pindex
+                    }
+                )
+            else: 
+                psite = all_sites[pindex]
+                csite = sites[cindex]
+                if (
+                    # The or construct returns True immediately once one of the conditions are satisfied.
+                    psite.species != csite.species
+                    or (not np.allclose(psite.coords, csite.coords, atol=atol))
+                    or (psite.properties != csite.properties)
+                ):
+                    neighbor_dict[cindex].append(
+                        {
+                        'nn_distance':d,
+                        'index':pindex
+                        }
+                    )
+
+        neighbors = [neighbor_dict[i] for i in range(len(sites))]
+
+        return neighbors

@@ -38,10 +38,9 @@ class RMC():
             )
     
     def apply_oxi_state(self, valences, struct):
-        # BV = BVAnalyzer()
-        # valences = BV.get_valences(self)
         for i in range(len(struct.sites)):
-            struct.sites[i].oxi_state = valences[i]
+            #just choose first set of oxi state guesses in the returned tuple
+            struct.sites[i].oxi_state = valences[0][struct.sites[i].specie.symbol]
         return
     
     
@@ -467,8 +466,3 @@ class RMC():
         print(f'counter = {counter}')
         print(f'moves ={moves}')
         return output_structure
-   
-
-        
-        
-        

@@ -143,7 +143,6 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
         distances_by_type = {}
         for p in itertools.product(composition.keys(), composition.keys()):
             distances_by_type[p] = []
-            
     
         def get_symbol(s, site):
             idx = bisect.bisect_right(self.el_switch, site)
@@ -152,8 +151,8 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
         for site, nlst in zip(enumerate(s.sites), neighbors_lst):  # Each list is a list for each site
             my_elem = get_symbol(s, site[0])
             for neighbor in nlst:
-                rij = neighbor[1]
-                n_elem = get_symbol(s, neighbor.index)
+                rij = neighbor['nn_distance']
+                n_elem = get_symbol(s, neighbor['index'])
                 distances_by_type[(my_elem, n_elem)].append(rij)
     
         # Compute and normalize the prdfs
