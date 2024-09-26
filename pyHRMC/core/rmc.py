@@ -19,7 +19,7 @@ from pymatgen.core import Structure
 
 class RMC():
       
-    def __init__(self, experimental_G_csv, sigma, q_scatter, q_temp = None, init_temp=None, hybrid=True):
+    def __init__(self, experimental_G_csv, sigma, q_scatter, q_temp = None, init_temp=None, hybrid=True, dump_freq = 5000):
         self.hybrid = hybrid
         self.experimental_G_csv = experimental_G_csv
         self.batched_error_constant = sigma
@@ -30,6 +30,7 @@ class RMC():
         self.q_scatter = q_scatter
         self.nsteps = 0
         self.success_step = 0
+        self.dump_freq = dump_freq
 
         if self.hybrid == True and self.q_temp == None or self.batched_temp == None:
             raise RuntimeError(
@@ -74,7 +75,7 @@ class RMC():
         if self.hybrid == True:
             #HRMC
             lammps_run = Lammps_HRMC(lmp_input, task_id)
-            new_energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step)
+            new_energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step, self.dump_freq)
         
         structure.load_experimental_from_file(self.experimental_G_csv)
         new_error,slope = structure.prdf_error(neighborlist)
@@ -155,7 +156,7 @@ class RMC():
           
     def worker_task(self, structure, lmp_input, task_id):
         lammps_run = Lammps_HRMC(lmp_input, task_id)
-        energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step)
+        energy, max_unc = lammps_run.lammps_energy(structure, self.nsteps, self.success_step, self.dump_freq)
         return energy, max_unc     
           
 
@@ -187,6 +188,7 @@ class RMC():
         lmp_init='in_init.lmp',
         lmp_test = 'in.lmp',
         lmp_accept='in_accept.lmp',
+        
         
         
         max_steps= 100,
@@ -363,7 +365,7 @@ class RMC():
         """
         while self.nsteps < max_steps:
             self.nsteps += 1
-            if self.nsteps % 5000 == 0:
+            if self.nsteps % self.dump_freq == 0:
                 if os.path.exists("pdfs.png"):
                     os.remove("pdfs.png") 
                 current_structure.plot_pdf(current_structure_neighborlist, experimental_G_csv, slope)

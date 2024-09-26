@@ -30,7 +30,7 @@ class Lammps_HRMC():
         return
     
     
-    def lammps_energy(self, structure, nsteps, success_step):
+    def lammps_energy(self, structure, nsteps, success_step, dump_freq):
         max_unc = 0
         self.lammps_file(structure)
         if nsteps != 0:
@@ -40,18 +40,17 @@ class Lammps_HRMC():
                 elif line.startswith('reset_timestep'):
                     self.lmp.command(f'variable last_step equal {success_step}')
                     self.lmp.command(line)
+                elif nsteps % dump_freq == 0 and line.startswith('compute'):
+                    max_unc = self.lmp.extract_compute('MaxUnc', 0,0)    
                 else:
                     self.lmp.command(line)
+                
         elif nsteps == 0:
               for line in self.lmp_file:
                 if line.startswith('read_data'):            
                     self.lmp.command(f'read_data {self.task_id}.lmp')
                 else:
                     self.lmp.command(line)
-    
-        if nsteps % 100 == 0:
-        # unc = self.lmp.extract_atom('c_unc')
-            max_unc = self.lmp.extract_compute('MaxUnc', 0,0)
             
         self.lmp.command("variable e equal pe")
         self.lmp.command("run 0")
