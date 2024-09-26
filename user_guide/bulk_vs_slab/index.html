@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/nonhybrid_setup/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/bulk_vs_slab/" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Non-hybrid simulations - pyHRMC</title>
+    <title>Bulk vs slab cells - pyHRMC</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Non-hybrid simulations";
-        var mkdocs_page_input_path = "user_guide/nonhybrid_setup.md";
-        var mkdocs_page_url = "/pyHRMC/user_guide/nonhybrid_setup/";
+        var mkdocs_page_name = "Bulk vs slab cells";
+        var mkdocs_page_input_path = "user_guide/bulk_vs_slab.md";
+        var mkdocs_page_url = "/pyHRMC/user_guide/bulk_vs_slab/";
       </script>
     
     <!--[if lt IE 9]>
@@ -67,11 +67,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../validator_selection/">Validator selection</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../bulk_vs_slab/">Bulk vs slab cells</a>
-                  </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Non-hybrid simulations</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Bulk vs slab cells</a>
     <ul class="current">
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../nonhybrid_setup/">Non-hybrid simulations</a>
                   </li>
               </ul>
       </div>
@@ -89,9 +89,9 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">User Guide</li>
-      <li class="breadcrumb-item active">Non-hybrid simulations</li>
+      <li class="breadcrumb-item active">Bulk vs slab cells</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide/nonhybrid_setup.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide/bulk_vs_slab.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -99,29 +99,29 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="non-hybrid-simulations-rmc">Non-hybrid simulations (RMC)</h1>
-<p>Traditional RMC simulations can also be performed with pyHRMC. It’s important to note that traditional RMC is typically less accurate than HRMC, and for this reason, we don’t recommend it. However, it can be useful in some cases, such as when a suitable force field is not available for energy calculations. In this case, empirical structural constraints are necessary to prevent the Monte Carlo algorithm from producing unphysical configurations. Coordination and distance constraints are available under the Validators class. </p>
-<p>To run an RMC simulation (with no energy constraint), use the following input files:</p>
-<ul>
-<li>runfile.py</li>
-<li>your_epdf.gr</li>
-<li>initial_structure.vasp</li>
-</ul>
-<p>The runfile must be configured to appropriately to avoid running features designing for HRMC. When instantiating the RMC class, set <code>hybrid=False</code> (defaults to True). Additionally, <code>q_temp</code> and <code>init_temp</code> arguments are not required for non-hybrid RMC (defaults to None):</p>
-<p>Below is an example of a non-hybrid RMC setup with no quenching of the error constraint parameter <code>sigma</code>:</p>
-<pre><code>    rmc = RMC(
-        experimental_G_csv=&quot;al2o3_5nm_gr.txt&quot;, 
-        sigma = 0.05, 
-        q_scatter = 1, 
-        hybrid= False
-        )
+                <h1 id="bulk-vs-slab-simulations">Bulk vs slab simulations</h1>
+<p>pyHRMC is designed to handle bulk cells or slab cells in a vacuum. While the package will automatically detect the cell type and handle periodic boundary conditions, several considerations and limitations exist. </p>
+<p>For a slab cell, pyHRMC assumes that the vacuum space above and below the cell exist in the z-direction, and that the structure extends fully to the cell boundaries in the x and y directions. Additionally, the slab must be orthogonal to the z-axis for the package to correctly detect the cell thickness. When running a slab cell simulation and employing the <code>Validators.coordination</code> constraint, be sure to set constraints for <code>SurfaceCoordinationRange</code> and <code>SurfaceDistance</code> in addition to <code>BulkCoordinationRange</code>. </p>
+<p>For example:</p>
+<pre><code>&quot;Coordination&quot;: {
+    &quot;BulkCoordinationRange&quot;: {
+        &quot;Al&quot;: {&quot;Al&quot; : [0, 2], &quot;O&quot;: [2, 7]}, 
+        &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} 
+        },
+    &quot;SurfaceCoordinationRange&quot;: {
+        &quot;Al&quot;: {&quot;Al&quot;: [0, 2], &quot;O&quot;: [1, 7]}, 
+        &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} 
+        },
+    &quot;SurfaceDistance&quot;: 5
+    }
 </code></pre>
-<p>When calling the <code>run_rmc</code> method, the configuration is the same as HRMC. However, we strongly suggest using additional validators to appropriately constrain the system.</p>
+<p>In the event of performing a bulk HRMC simulation instead of a slab, the cell must also be orthogonal in the z-axis and assumes that there is <strong>not</strong> vacuum space in the z-direction. If the difference between the lattice dimension in the z-direction and the structure thickness along z is greater than 1, the package will incorrectly assume that the cell is a slab and may perform erroneously. The <code>Validators.coordination</code> constraint should be used with only <code>BulkCoordinationRange</code>.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../bulk_vs_slab/" class="btn btn-neutral float-left" title="Bulk vs slab cells"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../validator_selection/" class="btn btn-neutral float-left" title="Validator selection"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../nonhybrid_setup/" class="btn btn-neutral float-right" title="Non-hybrid simulations">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -148,8 +148,10 @@
         </span>
     
     
-      <span><a href="../bulk_vs_slab/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../validator_selection/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
+    
+      <span><a href="../nonhybrid_setup/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
