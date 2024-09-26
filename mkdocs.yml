@@ -13,6 +13,7 @@ nav:
         - LAMMPS input files: user_guide/getting_started/lammps_input.md
         - Understanding outputs: user_guide/getting_started/outputs.md
     - Validator selection: user_guide/validator_selection.md
+    - Bulk vs slab cells: user_guide/bulk_vs_slab.md
     - Non-hybrid simulations: user_guide/nonhybrid_setup.md
 
 theme: readthedocs
