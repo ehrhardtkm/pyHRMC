@@ -13,7 +13,7 @@ class Lammps_HRMC():
     def lammps_file(self, structure):
         atoms = AseAtomsAdaptor.get_atoms(structure)
         filename = f'{self.task_id}.lmp'
-        write(filename, atoms,  format="lammps-data", specorder=["Al", "O"])
+        write(filename, atoms,  format="lammps-data", specorder=structure.el_list)
          
     def simple_lmp(self, structure):
         self.lammps_file(structure)

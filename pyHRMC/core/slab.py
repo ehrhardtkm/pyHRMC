@@ -317,6 +317,7 @@ class RdfSlab(Structure):
         plt.legend()
         plt.savefig("pdfs.png")
         plt.show()
+        plt.close()
 
         with open("pdf.txt", 'w') as file:
             file.write(f"{' '.join(map(str, r))} \n{' '.join(map(str, calc_scaled))}\n")
