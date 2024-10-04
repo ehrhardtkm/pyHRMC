@@ -266,9 +266,7 @@ class Coordination(Validator):
     def get_coordination(self,  move_indices, voro, sliced_df, points, struct):
         
         neighbor_list = []
-        distance_list = []
         element_list = []
-        coordination_number = int()
              
         for move_index in move_indices:
             """  Check that all coordination numbers fall within a range """
@@ -377,17 +375,13 @@ class Coordination(Validator):
                 nn = nndata.cn_nninfo[max_key]
                 for entry in nn:
                     entry["weight"] = 1
-
-            coordination_number += len(nn)
            
             for n in nn:
                 index = sliced_df.iloc[n['site_index']].name
                 neighbor_list.append(index)
-                dist = nns[n['site_index']]['face_dist']*2
-                distance_list.append(dist)
                 el = sliced_df.iloc[n['site_index']]['el']
                 element_list.append(el)
-        return element_list,distance_list,center_element,coordination_number, neighbor_list
+        return element_list,center_element, neighbor_list
 
 
 
@@ -491,7 +485,7 @@ class Coordination(Validator):
         
             """ Checking coordination number """
             # run pymatgen-modified coordination number function on moved atom
-            element_list,distance_list,el,coordination_number,neighbor_list = self.get_coordination(move_images, voro, sliced_df, points, struct)            
+            element_list,el,neighbor_list = self.get_coordination(move_images, voro, sliced_df, points, struct)            
             
             # check if the atom is near a surface
             if self.surface_coordination is not None:
@@ -503,17 +497,19 @@ class Coordination(Validator):
                         el_cn = len([nn for nn in element_list if nn == el_nn])
                         if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
                             pass
-                            #print(f'pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
+                            # print(f'surface pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
                         else:
-                            #print(f'fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
+                            # print(f'surface fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
                             return False
                 else:
                     cn_constraints = self.coordination[el]
                     for el_nn in cn_constraints: 
                         el_cn = len([nn for nn in element_list if nn == el_nn])
                         if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                            # print(f' pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
                             pass
                         else:
+                            # print(f' fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
                             return False
             elif self.surface_coordination is None:
                 cn_constraints = self.coordination[el]
@@ -527,7 +523,7 @@ class Coordination(Validator):
         
             # run pymatgen-modified coordination number function on neighbor atoms
             for neighbor in neighbor_list:
-                element_list,distance_list,el,coordination_number,neighbor_list = self.get_coordination([neighbor], voro, sliced_df, points, struct)
+                element_list,el,neighbor_list = self.get_coordination([neighbor], voro, sliced_df, points, struct)
                 
                 # check if the atom is near a surface
                 if self.surface_coordination is not None:
@@ -538,7 +534,7 @@ class Coordination(Validator):
                         for el_nn in cn_constraints: 
                             el_cn = len([nn for nn in element_list if nn == el_nn])
                             if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
-                                pass
+                                pass 
                             else:
                                 return False
                     else:
@@ -554,7 +550,7 @@ class Coordination(Validator):
                     for el_nn in cn_constraints: 
                         el_cn = len([nn for nn in element_list if nn == el_nn])
                         if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
-                            pass
+                            pass 
                         else:
                             return False
         return True

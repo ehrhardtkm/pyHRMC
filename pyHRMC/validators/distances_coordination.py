@@ -13,8 +13,8 @@ from collections import namedtuple
 NNData= namedtuple("NNData", ["all_nninfo", "cn_weights", "cn_nninfo"])
 
 class DistancesCoordination(Validator):
-    def __init__(self, MinBondLength, BulkCoordinationRange, SurfaceCoordinationRange, SurfaceDistance):
-            self.min_distances = MinBondLength
+    def __init__(self, MinDistances, BulkCoordinationRange, SurfaceCoordinationRange, SurfaceDistance):
+            self.min_distances = MinDistances
             self.coordination = BulkCoordinationRange
             self.surface_coordination = SurfaceCoordinationRange
             self.surface_distance = SurfaceDistance
@@ -268,9 +268,7 @@ class DistancesCoordination(Validator):
     def get_coordination(self,  move_indices, voro, sliced_df, points, struct):
         
         neighbor_list = []
-        distance_list = []
         element_list = []
-        coordination_number = int()
         
         """ Check that all bonds are longer than minimum distance"""
        
@@ -282,23 +280,22 @@ class DistancesCoordination(Validator):
             #ridge_points is a pair of atoms; we remove the pair that is not the center atom
             neighbors = [a if b == true_move_index else b for a,b in neighbors]
             
-            distances = []
             # get distances to neighbors
-            for neighbor in neighbors:
-                distances.append(np.linalg.norm(points[true_move_index]-points[neighbor]))
+            distances = np.linalg.norm(points[true_move_index] - points[neighbors], axis=1)
+
             
             # compare distances to allowed distances based on element identity
             # return false if the distance is too short
             center_element = sliced_df.at[move_index, 'el']
             # breakpoint()
             
-            for i,neighbor in enumerate(neighbors):
+            for distance,neighbor in zip(distances, neighbors):
                 neighbor_element = sliced_df.iat[neighbor, sliced_df.columns.get_loc("el")]
                 try:
                     allowed_distance = self.min_distances[(center_element, neighbor_element)]
                 except:
                     allowed_distance = self.min_distances[(neighbor_element, center_element)]
-                if distances[i] < allowed_distance:
+                if distance < allowed_distance:
                     print('Too short')
                     return False
 
@@ -360,13 +357,10 @@ class DistancesCoordination(Validator):
     
             # sort nearest neighbors from highest to lowest weight
             nn = sorted(nn, key=lambda x: x["weight"], reverse=True)
+
             
-            
-            # if struct.vind:
-            #     breakpoint()
-            
-            # setting maximum coordination number as 20
-            length = 20
+            # setting maximum coordination number as 15
+            length = 15
             nndata = ""
             if nn[0]["weight"] == 0:
                 # self.transform_to_length(self.NNData([], {0: 1.0}, {0: []}), length)
@@ -412,22 +406,13 @@ class DistancesCoordination(Validator):
                 nn = nndata.cn_nninfo[max_key]
                 for entry in nn:
                     entry["weight"] = 1
-
-            coordination_number += len(nn)
             
-            # if struct.vind:
-            #     breakpoint()
-            # breakpoint()
-            
-
             for n in nn:
                 index = sliced_df.iloc[n['site_index']].name
                 neighbor_list.append(index)
-                dist = nns[n['site_index']]['face_dist']*2
-                distance_list.append(dist)
                 el = sliced_df.iloc[n['site_index']]['el']
                 element_list.append(el)
-        return element_list,distance_list,center_element,coordination_number, neighbor_list
+        return element_list,center_element, neighbor_list
 
 
 
@@ -531,50 +516,69 @@ class DistancesCoordination(Validator):
             """ Checking coordination number """
             # run pymatgen-modified coordination number function on moved atom
             try:
-                element_list,distance_list,el,coordination_number,neighbor_list = self.get_coordination(move_images, voro, sliced_df, points, struct)
+                element_list,el,neighbor_list = self.get_coordination(move_images, voro, sliced_df, points, struct)
             except:
                 return False  # when distances are too short
             
      
             # check if the atom is near a surface
-            if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
-                struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
-                
-                if self.surface_coordination[el][0] < coordination_number < self.surface_coordination[el][1]:
-                    pass
+            if self.surface_coordination is not None:
+                if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
+                    struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
+                    cn_constraints = self.surface_coordination[el]
+                    for el_nn in cn_constraints: 
+                        el_cn = len([nn for nn in element_list if nn == el_nn])
+                        if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
+                            pass
+                        else:
+                            return False  # when coordination number isn't right
                 else:
-                    return False
-            
-            
-            if self.coordination[el][0] < coordination_number < self.coordination[el][1]:
-                pass
-            else:
-                return False  # when coordination number isn't right
-            
-        
-            """ Checking that distance > minimum distance """
-            for i,distance in enumerate(distance_list):
-                try:
-                    pair = (el, element_list[i])
-                    if distance < self.min_distances[pair]:
+                    cn_constraints = self.coordination[el]
+                    for el_nn in cn_constraints: 
+                        el_cn = len([nn for nn in element_list if nn == el_nn])
+                        if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                            pass
+                        else:
+                            return False  # when coordination number isn't right
+            elif self.surface_coordination is None:
+                cn_constraints = self.coordination[el]
+                for el_nn in cn_constraints: 
+                    el_cn = len([nn for nn in element_list if nn == el_nn])
+                    if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                        pass
+                    else:
                         return False
-                except:
-                    pair = (element_list[i], el)
-                    if distance < self.min_distances[pair]:
-                        return False
-        
-            # run pymatgen-modified coordination number function on neighbor atoms
-            
-            for neighbor in neighbor_list:
-                try:
-                    element_list,distance_list,el,coordination_number,neighbor_list = self.get_coordination([neighbor], voro, sliced_df, points, struct)
-                except:
-                    return False  # when distances are too short
-                
-                if self.coordination[el][0] < coordination_number < self.coordination[el][1]:
-                    pass
-                else:
-                #    print("Neighbor has too many neighbors")
-                    return False  # when coordination number isn't right
 
+            # run pymatgen-modified coordination number function on neighbor atoms
+            for neighbor in neighbor_list:
+                element_list,el,neighbor_list = self.get_coordination([neighbor], voro, sliced_df, points, struct)
+                
+                # check if the atom is near a surface
+                if self.surface_coordination is not None:
+                    if struct.sites[move_index].z < struct.thickness_z['min_z'] + self.surface_distance or \
+                        struct.sites[move_index].z > struct.thickness_z['max_z'] - self.surface_distance:
+                        
+                        cn_constraints = self.surface_coordination[el]
+                        for el_nn in cn_constraints: 
+                            el_cn = len([nn for nn in element_list if nn == el_nn])
+                            if self.surface_coordination[el][el_nn][0] <= el_cn <= self.surface_coordination[el][el_nn][1]:
+                                pass
+                            else:
+                                return False  # when coordination number isn't right
+                    else:
+                        cn_constraints = self.coordination[el]
+                        for el_nn in cn_constraints: 
+                            el_cn = len([nn for nn in element_list if nn == el_nn])
+                            if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                                pass
+                            else:
+                                return False  # when coordination number isn't right
+                elif self.surface_coordination is None:
+                    cn_constraints = self.coordination[el]
+                    for el_nn in cn_constraints: 
+                        el_cn = len([nn for nn in element_list if nn == el_nn])
+                        if self.coordination[el][el_nn][0] <= el_cn <= self.coordination[el][el_nn][1]:
+                            pass
+                        else:
+                            return False
         return True
