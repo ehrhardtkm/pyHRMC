@@ -1,4 +1,5 @@
 #validator architecture taken from Simmate
+# Simmate is licensed undr a BSD license, which can be found in LICENSE.md
 
 class Validator:
     @classmethod

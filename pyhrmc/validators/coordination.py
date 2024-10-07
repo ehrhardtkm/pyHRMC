@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# This code is adapted from pymatgen.analysis.local_env.py
+# pymatgen is licensed under a MIT license, which can be found in LICENSE.md
+
+
 from pyHRMC.validators import Validator
 import numpy as np
 import pandas as pd

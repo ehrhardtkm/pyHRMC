@@ -378,6 +378,7 @@ class RdfSlab(Structure):
                 f.write(out)
 
     # refactored version of pymatgen's get_all_neighbors method for speed up by vectorization
+    # pymatgen is licensed under a MIT license, which can be found in LICENSE.md
     def get_all_neighbors(
         self,
         r: float,

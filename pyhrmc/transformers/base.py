@@ -1,4 +1,5 @@
-#architecture from Simmate
+# architecture from Simmate
+# Simmate is licensed under a BSD license, which can be found in LICENSE.md
 
 class Transformation:
     @classmethod

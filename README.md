@@ -6,7 +6,23 @@ Full documentation can be found at https://ehrhardtkm.github.io/pyHRMC/
 
 Installation
  --- 
-To install, we recommend the following: 
+Prior to installing pyHRMC, LAMMPS must be installed and built in serial. Additionally, if using a FLARE potential, LAMMPS must be compiled with FLARE. Instructions for these steps can be found at these links:
+
+- https://docs.lammps.org/Install.html
+- https://mir-group.github.io/flare/installation/lammps.html
+
+To install pyHRMC, first create a virtual environment:
+```
+conda create -n pyHRMC pip python==3.11
+conda activate pyHRMC
+```
+
+Installation can then be performed in the new environment. pyHRMC is currently available on PyPi for `pip install`: 
+```
+pip install pyhrmc
+```
+
+If users desire to modify the code from their own needs, we recommend the following steps instead:
 ``` 
 conda create -n pyHRMC pip python==3.11 
 conda activate pyHRMC
