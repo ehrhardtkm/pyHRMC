@@ -59,8 +59,10 @@ class RdfSlab(Structure):
 
     @property
     def element_pairs(self):
-
-        elements = self.symbol_set
+        try:
+            elements = self.el_list
+        except:
+            elements = self.symbol_set
         return list(itertools.combinations_with_replacement(elements, 2))
 
     
@@ -358,7 +360,7 @@ class RdfSlab(Structure):
         
     def write_xdatcar(self, frame_num):
             with open('XDATCAR', 'a') as f:
-                out = ('alumina from rmc\n'
+                out = ('from pyHRMC\n'
                           '           1\n')
                 out += np.array2string(self.lattice.matrix, suppress_small=True).replace('[', '').replace(']','')+'\n'
                 comp = self.composition.formula

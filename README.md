@@ -1,7 +1,6 @@
 About 
 --- 
-pyHRMc is designed for HRMC simulations using experimental electron pair distribution functions as a primary constraint. This package was built using tools from 
-[Simmate](https://github.com/jacksund/simmate). 
+pyHRMc is designed for HRMC simulations using experimental electron pair distribution functions as a primary constraint. This packagerelies heavily and uses code from [pymatgen](https://pymatgen.org/), which is released under the MIT license.
 
 Full documentation can be found at https://ehrhardtkm.github.io/pyHRMC/
 

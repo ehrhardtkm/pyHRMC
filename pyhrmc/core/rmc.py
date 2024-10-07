@@ -306,7 +306,7 @@ class RMC():
         
         #BUG: FOR TROUBLEHSOOTING ONLY, FIX THIS 
         # setattr(initial_structure, 'TCSs', TCS)
-        CROSS_SECTIONS_CONSTANTS = {'Al': 5.704193e-2, 'O': 2.029453e-2}
+        CROSS_SECTIONS_CONSTANTS = {'Al': 5.704193e-2, 'O': 2.029453e-2, 'H' : 1.04e-4}
         setattr(initial_structure, 'TCSs', CROSS_SECTIONS_CONSTANTS)
         print(initial_structure.TCSs)
 
@@ -347,9 +347,9 @@ class RMC():
         #additional steps to initialize HRMC
         if self.hybrid == True:
             default_id = 100
-            initial_e, max_unc = self.worker_task(initial_structure, lmp_init_in, default_id)
+            initial_e, max_unc = self.worker_task(current_structure, lmp_init_in, default_id)
             self.current_energy = initial_e
-            print(f'Step {self.nsteps}. Sum of residuals = {current_e}. Energy = {self.current_energy}.')
+            print(f'Step {self.nsteps}. Sum of residuals = {current_e}. Energy = {self.current_energy/num_atoms}.')
         else:
             print(f'Step {self.nsteps}. Sum of residuals = {current_e}.')
         

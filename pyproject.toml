@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyhrmc"
+version = "0.0.0"
+description = "A Python implementation of Hybrid Reverse Monte Carlo for electron scattering of thin films"
+readme = "README.md"
+
+authors = [
+  {name = "Karen M. Ehrhardt", email = "kme@email.unc.edu"}
+]
+readme = "README.md"
+keywords = ["Hybrid Reverse Monte Carlo", "HRMC", "Amorphous materials"]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent"
+]
+license = {text = "BSD-3-Clause"}
+requires-python = "==3.11"
+dependencies = [
+  "ase",
+  "matminer",
+  "matplotlib",
+  "numpy<2",
+  "pandas",
+  "pymatgen==2024.2.20",
+  "pymatgen_analysis_diffusion==2023.8.15",
+  "scikit_learn==1.2.1",
+  "scipy",
+  "setuptools>=61.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ehrhardtkm/pyHRMC"
+repository = "https://github.com/ehrhardtkm/pyHRMC"
+documentation = "https://ehrhardtkm.github.io/pyHRMC/"
+
+
+# Indicate which directory the source coude is in
+[tool.setuptools.packages.find]
+exclude = ["site", "site.*"]

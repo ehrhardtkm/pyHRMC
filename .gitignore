@@ -2,3 +2,6 @@ pyHRMC.egg-info
 __pycache__/
 site/
 tatus
+status
+.vscode
+dist/
