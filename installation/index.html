@@ -135,21 +135,29 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="installation">Installation</h1>
-<p>pyHRMC is not yet available on conda or pip. For the time being, install the package with the following steps:</p>
-<ol>
-<li>Create and activate a virtual environment with the required packages. Perform via conda with the command:</li>
-</ol>
+<p>Prior to installing pyHRMC, LAMMPS must be installed and built in serial. Additionally, if using a FLARE potential, LAMMPS must be compiled with FLARE. Instructions for these steps can be found at these links:</p>
+<ul>
+<li>https://docs.lammps.org/Install.html</li>
+<li>https://mir-group.github.io/flare/installation/lammps.html</li>
+</ul>
+<p>To install pyHRMC, first create a virtual environment with the required packages. You can perform this via conda with the commands:</p>
 <pre><code>conda create -n pyHRMC pip python==3.11
 conda activate pyHRMC
 </code></pre>
-<ol>
-<li>Download a copy of the repository locally. The most recent version of the code can be found at https://github.com/ehrhardtkm/pyHRMC.</li>
-</ol>
+<p>Installation can then be performed in the new environment. pyHRMC is not yet available on conda, but is available on PyPi for <code>pip install</code>: </p>
+<pre><code>pip install pyhrmc
+</code></pre>
+<p>Alternatively, if users desire to modify the code from their own needs, we recommend the following steps instead:</p>
+<p>Create an environment:</p>
+<pre><code>conda create -n pyHRMC pip python==3.11 
+conda activate pyHRMC
+</code></pre>
+<p>Download a copy of the repository locally. The most recent version of the code can be found at https://github.com/ehrhardtkm/pyHRMC.</p>
 <pre><code>git clone https://github.com/ehrhardtkm/pyHRMC.git
 cd pyHRMC
 </code></pre>
 <ol>
-<li>Install the package in development mode with pip. </li>
+<li>Install the package in development mode with pip.</li>
 </ol>
 <pre><code>pip install -e .
 </code></pre></div>
