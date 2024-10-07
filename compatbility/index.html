@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>User guide - pyHRMC</title>
+        <title>Compatbility - pyHRMC</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/fontawesome.min.css" rel="stylesheet">
         <link href="../css/brands.min.css" rel="stylesheet">
@@ -53,25 +53,25 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="getting_started/required_files/" class="dropdown-item">Required files</a>
+    <a href="../user_guide/getting_started/required_files/" class="dropdown-item">Required files</a>
 </li>
             
 <li>
-    <a href="getting_started/runfile_setup/" class="dropdown-item">Runfile setup</a>
+    <a href="../user_guide/getting_started/runfile_setup/" class="dropdown-item">Runfile setup</a>
 </li>
             
 <li>
-    <a href="getting_started/lammps_input/" class="dropdown-item">LAMMPS input files</a>
+    <a href="../user_guide/getting_started/lammps_input/" class="dropdown-item">LAMMPS input files</a>
 </li>
             
 <li>
-    <a href="getting_started/outputs/" class="dropdown-item">Understanding outputs</a>
+    <a href="../user_guide/getting_started/outputs/" class="dropdown-item">Understanding outputs</a>
 </li>
     </ul>
   </li>
                                     
 <li>
-    <a href="validator_selection/" class="dropdown-item">Validator selection</a>
+    <a href="../user_guide/validator_selection/" class="dropdown-item">Validator selection</a>
 </li>
                                     
   <li class="dropdown-submenu">
@@ -79,11 +79,11 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="nonhybrid_setup/" class="dropdown-item">Non-hybrid simulations</a>
+    <a href="../user_guide/nonhybrid_setup/" class="dropdown-item">Non-hybrid simulations</a>
 </li>
             
 <li>
-    <a href="bulk_vs_slab/" class="dropdown-item">Bulk vs slab cells</a>
+    <a href="../user_guide/bulk_vs_slab/" class="dropdown-item">Bulk vs slab cells</a>
 </li>
     </ul>
   </li>
@@ -115,7 +115,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#user-guide" class="nav-link">User Guide</a>
+            <li class="nav-item" data-bs-level="1"><a href="#compatbility" class="nav-link">Compatbility</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -124,72 +124,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h2 id="user-guide">User Guide</h2>
-<p>Running a simulation with pyHRMC requires several input files that contain calculation parameters, experimental data, and an initial structure configuration. To begin, create a new directory with the following files:
--   Runfile.py
--   Your epdf.gr
--   initial_structure.vasp
--   LAMMPS input files:
-o   In.lmp
-o   In_init.lmp
-o   In_accept.lmp
--   FLARE force field model (Optional)
-All calculation parameters are defined in runfile.py, which instantiates the RMC class before calling the run_rmc() method to perform the simulation. </p>
-<pre><code>rmc = RMC(experimental_G_csv=str, sigma=float, q_scatter=float, q_temp=float, init_temp=float)
-</code></pre>
-<p>The RMC class takes arguments that determine the quench rate of the error and energy constraints.</p>
-<pre><code>Experimental_G_csv: filename of experiment ePDF
-sigma: # initial value of sigma, the measure of uncertainty in ePDF data
-q_scatter: # quench rate for error constraint (rate of decreasing sigma)
-q_temp:  quench rate for energy constraint (rate of decreasing temperature)
-init_temp: initial temperature, which determines the acceptance probability based on energy constraint
-</code></pre>
-<p>To perform a simulation, use the run_rmc() method and further specify simulation parameters and constraints.</p>
-<pre><code>rmc.run_rmc(num_processes=int, initial_structure=str, keV=int, prdf_args={“bin_size:float}, transformations={“AtomHop”:{}}, validators={args}, max_steps=int)
-</code></pre>
-<p>An example for a simulation of amorphous Al2O3 is shown below:</p>
-<pre><code>from simmate.apps.epdf_rmc.rmc import RMC
-import multiprocessing
-
-if __name__ == &quot;__main__&quot;:
-
-    rmc = RMC(experimental_G_csv=&quot;al2o3_5nm_gr.txt&quot;, sigma = 0.05, q_scatter = 1, q_temp = 0.999999995, init_temp = 1000)
-    rmc.run_rmc(
-        num_processes = 8,
-        initial_structure=&quot;POSCAR_47A-d33&quot;,
-        keV=200,
-        prdf_args={&quot;bin_size&quot;: 0.04},
-        transformations={
-            # &quot;ASECoordinatePerturbation&quot;:{}, #simmate version of RattleMutation from ase, rattle_prob auto set to 0.3
-            &quot;AtomHop&quot;: {}, # consider adding a second, smaller step size &quot;max_step&quot;: 0.2
-        },
-
-        validators={
-            &quot;SlabThickness&quot;: {&quot;max_thickness&quot;: 47.4},
-            &quot;Coordination&quot;: {
-                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
-                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
-                &quot;SurfaceDistance&quot;: 5
-                }
-            },
-
-        max_steps= 1000000,
-    )
-</code></pre>
-<p>Traditional RMC simulations can also be performed with pyHRMC. It’s important to note that traditional RMC is typically less accurate than HRMC, and for this reason, we don’t recommend it. However, it can be useful in some cases, such as when a suitable force field is not available for energy calculations. 
-To run an RMC simulation (with no energy constraint):
-Required initial files:
--   runfile.py
--   your_epdf.gr
--   initial_structure.vasp
-In this case, empirical structural constraints are necessary to prevent the Monte Carlo algorithm from producing unphysical configurations. Coordination and distance constraints are available under the Validators class. </p>
-<pre><code>SlabThickness
-Coordination: {
-    BulkCoordinationRange
-    SurfaceCoordinationRange
-    SurfaceDistance
-}
-</code></pre></div>
+<h1 id="compatbility">Compatbility</h1></div>
             </div>
         </div>
 

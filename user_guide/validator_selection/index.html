@@ -1,124 +1,180 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/validator_selection/" />
-      <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Validator selection - pyHRMC</title>
-    <link rel="stylesheet" href="../../css/theme.css" />
-    <link rel="stylesheet" href="../../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
-    
-      <script>
-        // Current page data
-        var mkdocs_page_name = "Validator selection";
-        var mkdocs_page_input_path = "user_guide/validator_selection.md";
-        var mkdocs_page_url = "/pyHRMC/user_guide/validator_selection/";
-      </script>
-    
-    <!--[if lt IE 9]>
-      <script src="../../js/html5shiv.min.js"></script>
-    <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-    <div class="wy-side-scroll">
-      <div class="wy-side-nav-search">
-          <a href="../.." class="icon icon-home"> pyHRMC
-        </a><div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
-  </form>
-</div>
-      </div>
-
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../about/">About</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
-                </li>
-              </ul>
-              <p class="caption"><span class="caption-text">User Guide</span></p>
-              <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" >Getting started</a>
-    <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../getting_started/required_files/">Required files</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../getting_started/runfile_setup/">Runfile setup</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../getting_started/lammps_input/">LAMMPS input files</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../getting_started/outputs/">Understanding outputs</a>
-                </li>
-    </ul>
-                  </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Validator selection</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#validatorsslabthickness">Validators.SlabThickness</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#validatorscoordination">Validators.Coordination</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#validatorssitedistance">Validators.SiteDistance</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#validatorstargetdensity">Validators.TargetDensity</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#example">Example</a>
-    </li>
-    </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../bulk_vs_slab/">Bulk vs slab cells</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../nonhybrid_setup/">Non-hybrid simulations</a>
-                  </li>
-              </ul>
-      </div>
-    </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../..">pyHRMC</a>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
-      </nav>
-      <div class="wy-nav-content">
-        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">User Guide</li>
-      <li class="breadcrumb-item active">Validator selection</li>
-    <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide/validator_selection.md" class="icon icon-github"> Edit on GitHub</a>
-    </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-            <div class="section" itemprop="articleBody">
-              
-                <h1 id="pyhrmcvalidators">pyHRMC.validators</h1>
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Validator selection - pyHRMC</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/docco.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../css/extra.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">pyHRMC</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../background_theory/" class="nav-link">Theory</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Getting started</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../getting_started/required_files/" class="dropdown-item">Required files</a>
+</li>
+            
+<li>
+    <a href="../getting_started/runfile_setup/" class="dropdown-item">Runfile setup</a>
+</li>
+            
+<li>
+    <a href="../getting_started/lammps_input/" class="dropdown-item">LAMMPS input files</a>
+</li>
+            
+<li>
+    <a href="../getting_started/outputs/" class="dropdown-item">Understanding outputs</a>
+</li>
+    </ul>
+  </li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Validator selection</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Additional choices</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../nonhybrid_setup/" class="dropdown-item">Non-hybrid simulations</a>
+</li>
+            
+<li>
+    <a href="../bulk_vs_slab/" class="dropdown-item">Bulk vs slab cells</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../getting_started/outputs/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../nonhybrid_setup/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#pyhrmcvalidators" class="nav-link">pyHRMC.validators</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#slabthickness" class="nav-link">SlabThickness</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#coordination" class="nav-link">Coordination</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#distancescoordination" class="nav-link">DistancesCoordination</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#sitedistance" class="nav-link">SiteDistance</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#targetdensity" class="nav-link">TargetDensity</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#example" class="nav-link">Example</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="pyhrmcvalidators">pyHRMC.validators</h1>
 <p>Validators are used to impose physical constraints on the Monte Carlo algorithm and enforce the evolution of physically realistic structural configurations. In traditional RMC, these constraints are the sole avenue in imposing "chemical knowledge" on the simulation. In HRMC, the need for accurate and restrictive constraints are alleviated because the structure's energy is also used to determine whether to accept or reject a proposed step.</p>
 <p>Since no set of validators is universally applicable across systems, users must select values that are appropriate for their use case. </p>
-<h2 id="validatorsslabthickness">Validators.SlabThickness</h2>
+<h2 id="slabthickness">SlabThickness</h2>
 <pre><code>&quot;SlabThickness&quot;: {&quot;max_thickness&quot;: float}
 </code></pre>
 <p>When setting a <code>SlabThickness</code> constraint, a <code>max_thickness</code> value must be set. This is the max thickness that the simulation will allow a slab cell to reach in the z-direction (note that this is thickness, not the max Cartesian coordinate). This constraint should not be used when running bulk cell simulations, since cell length along z should be roughly equal to the thickness.</p>
-<h2 id="validatorscoordination">Validators.Coordination</h2>
+<h2 id="coordination">Coordination</h2>
 <pre><code>&quot;Coordination&quot;: {
-    &quot;BulkCoordinationRange&quot;,
+    &quot;BulkCoordinationRange&quot;: {
+        &quot;species&quot;: {
+            &quot;species1&quot; : [int (min_coordination), int (max_coordination)], 
+            &quot;species2&quot;: [int (min_coordination), int (max_coordination)], 
+            ...
+            }
+        ...
+        },
     &quot;SurfaceCoordinationRange&quot; = None,
     &quot;SurfaceDistance&quot; = None
 }
@@ -130,66 +186,136 @@
     }
 </code></pre>
 <p>The <code>SurfaceDistance</code> can be an integer or float and is used to differentiate surface and bulk atoms. This value is the distance from the top and bottom of the slab cell which contains the region of atoms that are constrained by <code>SurfaceCoordiantionRange</code>. All remaining atoms between these two surface regions are constrained by <code>BulkCoordinationRange</code>.</p>
-<h2 id="validatorssitedistance">Validators.SiteDistance</h2>
-<pre><code>&quot;SiteDistance&quot;: {&quot;distance_cutoff&quot;: }
+<h2 id="distancescoordination">DistancesCoordination</h2>
+<pre><code>&quot;DistancesCoordination&quot;: {
+    &quot;MinDistances&quot;: {
+        (&quot;species&quot;, &quot;species&quot;): float,
+        ...
+    },
+    &quot;BulkCoordinationRange&quot;: {
+        &quot;species&quot;: {
+            &quot;species1&quot; : [int (min_coordination), int (max_coordination)], 
+            &quot;species2&quot;: [int (min_coordination), int (max_coordination)], 
+            ...
+            }
+        ...
+        },
+    &quot;SurfaceCoordinationRange&quot; = None
+    &quot;SurfaceDistance&quot;= None
+    }
 </code></pre>
-<h2 id="validatorstargetdensity">Validators.TargetDensity</h2>
+<p>In addition to the same coordination check that is executed by the <code>Coordination</code> constraint, <code>DistanceCoordination</code> will conduct a check to determine if any interatomic distances are below the user-defined minimum distances. Distance cutoffs for this constrain should be defined pairwise for the species types. If any distances below the corresponding cutoff is found, the step will automatically be rejected.</p>
+<p>When checking the MinDistances, the program will recognize the pairwise combination regardless of order (e.g. ("Al", "O") is the same as ("O", "Al")). Below is an example for alumina (Al and O species):</p>
+<pre><code>&quot;DistancesCoordination&quot;: {
+    &quot;MinDistances&quot;: {
+        (&quot;Al&quot;, &quot;Al&quot;): 1.6,
+        (&quot;Al&quot;, &quot;O&quot;): 1.6,
+        (&quot;O&quot;, &quot;O&quot;): 1.8
+    },
+    &quot;BulkCoordinationRange&quot;: {
+        &quot;Al&quot;: {&quot;Al&quot; : [0, 2], &quot;O&quot;: [2, 7]}, 
+        &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} 
+        },
+    &quot;SurfaceCoordinationRange&quot;: {
+        &quot;Al&quot;: {&quot;Al&quot;: [0, 2], &quot;O&quot;: [1, 7]},
+        &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} 
+        },
+    &quot;SurfaceDistance&quot;: 3
+    }
+</code></pre>
+<p>If the same minimum distance can be applied to all element pairs, the <code>SiteDistance</code> constraint will be faster and can be used in conjunction with the <code>Coordination</code> constraint. </p>
+<h2 id="sitedistance">SiteDistance</h2>
+<pre><code>&quot;SiteDistance&quot;: {
+    distance_cutoff = float
+}
+</code></pre>
+<p>The <code>SiteDistance</code> constraint will uses the <a href="https://pymatgen.org/pymatgen.core.html">distance_matrix</a> property from pymatgen to check all interatomic distances in the system against a single, universal minimum distance cutoff. If any interatomic distances are found to be less than the user-specified cutoff, the program will automatically reject the step.</p>
+<h2 id="targetdensity">TargetDensity</h2>
 <pre><code>&quot;TargetDensity&quot;: {        
-    target_density,
+    target_density = float,
     percent_allowance=0.05
 }
 </code></pre>
+<p>The structure density is compared to the user-defined target density. If the density does not fall within the percent allowance of the target density (defaults to 5%), the step will automatically be rejected. </p>
 <h2 id="example">Example</h2>
-<p>An example of a <code>run_rmc</code> call with the <code>SlabThickness</code> and 'Coordination` validators in included in the documentation for <a href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/runfile_setup/">runfile setup</a>.</p>
-              
+<p>An example of a <code>run_rmc</code> call with the <code>SlabThickness</code> and 'Coordination` validators in included in the documentation for <a href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/runfile_setup/">runfile setup</a>.</p></div>
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../getting_started/outputs/" class="btn btn-neutral float-left" title="Understanding outputs"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../bulk_vs_slab/" class="btn btn-neutral float-right" title="Bulk vs slab cells">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
-
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
-          
         </div>
-      </div>
 
-    </section>
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../javascripts/mathjax.js"></script>
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="../../search/main.js"></script>
 
-  </div>
-
-  <div class="rst-versions" role="note" aria-label="Versions">
-  <span class="rst-current-version" data-toggle="rst-current-version">
-    
-        <span>
-          <a href="https://github.com/ehrhardtkm/pyHRMC" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
-        </span>
-    
-    
-      <span><a href="../getting_started/outputs/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../bulk_vs_slab/" style="color: #fcfcfc">Next &raquo;</a></span>
-    
-  </span>
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
 </div>
-    <script src="../../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "../..";</script>
-    <script src="../../js/theme_extra.js"></script>
-    <script src="../../js/theme.js"></script>
-      <script src="../../search/main.js"></script>
-    <script>
-        jQuery(function () {
-            SphinxRtdTheme.Navigation.enable(true);
-        });
-    </script>
 
-</body>
+    </body>
 </html>

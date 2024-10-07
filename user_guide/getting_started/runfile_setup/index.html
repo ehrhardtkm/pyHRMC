@@ -1,153 +1,227 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/runfile_setup/" />
-      <link rel="shortcut icon" href="../../../img/favicon.ico" />
-    <title>Runfile setup - pyHRMC</title>
-    <link rel="stylesheet" href="../../../css/theme.css" />
-    <link rel="stylesheet" href="../../../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
-    
-      <script>
-        // Current page data
-        var mkdocs_page_name = "Runfile setup";
-        var mkdocs_page_input_path = "user_guide/getting_started/runfile_setup.md";
-        var mkdocs_page_url = "/pyHRMC/user_guide/getting_started/runfile_setup/";
-      </script>
-    
-    <!--[if lt IE 9]>
-      <script src="../../../js/html5shiv.min.js"></script>
-    <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-      <script>hljs.highlightAll();</script> 
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-    <div class="wy-side-scroll">
-      <div class="wy-side-nav-search">
-          <a href="../../.." class="icon icon-home"> pyHRMC
-        </a><div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
-  </form>
-</div>
-      </div>
-
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../../about/">About</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../../installation/">Installation</a>
-                </li>
-              </ul>
-              <p class="caption"><span class="caption-text">User Guide</span></p>
-              <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" >Getting started</a>
-    <ul class="current">
-                <li class="toctree-l2"><a class="reference internal" href="../required_files/">Required files</a>
-                </li>
-                <li class="toctree-l2 current"><a class="reference internal current" href="#">Runfile setup</a>
-    <ul class="current">
-    </ul>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../lammps_input/">LAMMPS input files</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../outputs/">Understanding outputs</a>
-                </li>
-    </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../validator_selection/">Validator selection</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../bulk_vs_slab/">Bulk vs slab cells</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../nonhybrid_setup/">Non-hybrid simulations</a>
-                  </li>
-              </ul>
-      </div>
-    </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../..">pyHRMC</a>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         
-      </nav>
-      <div class="wy-nav-content">
-        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">User Guide</li>
-          <li class="breadcrumb-item">Getting started</li>
-      <li class="breadcrumb-item active">Runfile setup</li>
-    <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/ehrhardtkm/pyHRMC/edit/master/docs/user_guide/getting_started/runfile_setup.md" class="icon icon-github"> Edit on GitHub</a>
-    </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-            <div class="section" itemprop="articleBody">
-              
-                <h2 id="runfile-setup">Runfile setup</h2>
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Runfile setup - pyHRMC</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/docco.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../css/extra.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">pyHRMC</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../../background_theory/" class="nav-link">Theory</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
+                                <ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Getting started</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../required_files/" class="dropdown-item">Required files</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Runfile setup</a>
+</li>
+            
+<li>
+    <a href="../lammps_input/" class="dropdown-item">LAMMPS input files</a>
+</li>
+            
+<li>
+    <a href="../outputs/" class="dropdown-item">Understanding outputs</a>
+</li>
+    </ul>
+  </li>
+                                    
+<li>
+    <a href="../../validator_selection/" class="dropdown-item">Validator selection</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Additional choices</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../../nonhybrid_setup/" class="dropdown-item">Non-hybrid simulations</a>
+</li>
+            
+<li>
+    <a href="../../bulk_vs_slab/" class="dropdown-item">Bulk vs slab cells</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../required_files/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../lammps_input/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#runfile-setup" class="nav-link">Runfile setup</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#creating-rmc-object" class="nav-link">Creating RMC object</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#calling-the-run_rmc-method" class="nav-link">Calling the run_rmc() method</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#example" class="nav-link">Example</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="runfile-setup">Runfile setup</h1>
 <p>All calculation parameters are defined in runfile.py, which instantiates the RMC class before calling the run_rmc() method to perform the simulation. A runfile should begin with necessary imports:</p>
 <pre><code>from pyHRMC.core.rmc import RMC
 import multiprocessing
 </code></pre>
-<p>To run a simulation, the user must first instantiate the RMC class with the required arguments. These arguments determine the quench rate of the error and energy constraints.</p>
-<pre><code>rmc = RMC(experimental_G_csv=str, sigma=float, q_scatter=float, q_temp=float, init_temp=float)
+<h2 id="creating-rmc-object">Creating RMC object</h2>
+<p>To run a simulation, the user must first create a RMC class object with the required arguments. These arguments determine the quench rate of the error and energy constraints.</p>
+<pre><code>rmc = RMC(
+    experimental_G_csv=str, 
+    sigma=float, 
+    q_scatter=float, 
+    q_temp=float, 
+    init_temp=float, 
+    dump_freq = 5000
+    )
 </code></pre>
 <ul>
-<li>experimental_G_csv = filename of experiment ePDF</li>
-<li>sigma = initial value of sigma, the measure of uncertainty in ePDF data</li>
-<li>q_scatter = quench rate for error constraint (rate of decreasing sigma)</li>
-<li>q_temp =  quench rate for energy constraint (rate of decreasing temperature)</li>
-<li>init_temp = initial temperature, which determines the acceptance probability based on energy constraint</li>
+<li><strong>experimental_G_csv:</strong>  filename of experiment ePDF</li>
+<li><strong>sigma:</strong> initial value of sigma, the value is used to calculate the probability of accepting a step that increases the error (i.e. is the worse fit to experimental ePDF). To allow proper convergence, this value should <strong>not</strong> start at zero, which means that steps that increase error are never accepted. Using <code>sigma=0</code> for the entire simulation will prevent the structure sufficiently exploring the structural space to find a solution with a low error. For details, see <a href="https://ehrhardtkm.github.io/pyHRMC/background_theory/">Background and Theory</a></li>
+<li><strong>q_scatter:</strong> quench rate for error constraint (rate of decreasing sigma). If a value of q_scatter &lt; 1 is used, <code>sigma</code> will gradually decrease over the course of the simulation.</li>
+<li><strong>q_temp:</strong>  quench rate for energy constraint (rate of decreasing temperature). If a value of q_temp &lt; 1 is used, this value will gradually decrease over the course of the simulation.</li>
+<li><strong>init_temp:</strong> initial temperature, which is used to calculate the Boltzmann-type probability of accepting an energetically unfavorable step. The program will not quench the temperature below 100 K, so an <code>init_temp</code> below this value will remain unchanged regardless of the <code>q_temp</code>. For details, see <a href="https://ehrhardtkm.github.io/pyHRMC/background_theory/">Background and Theory</a></li>
+<li><strong>dump_freq:</strong> the frequency at which to update the <a href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/outputs">pdf.txt and pdfs.png files</a>, as well as output the <a href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/lammps_input">maximum atomic uncertainty</a> as computed by LAMMPS from a FLARE potential. Defaults to every 5000 HRMC iterations</li>
 </ul>
+<p>The choice of <code>sigma</code>, <code>init_temp</code>, and their corresponding quenching rates <code>q_scatter</code> and <code>q_temp</code> is highly important to allow the simulation to properly converge. Many examples of simulations and their parameters used can be found in the literature, some of which have been listed in the <a href="https://ehrhardtkm.github.io/pyHRMC/background_theory/">references section</a>.</p>
+<h2 id="calling-the-run_rmc-method">Calling the run_rmc() method</h2>
 <p>To perform a simulation, use the run_rmc() method and further specify simulation parameters and constraints.</p>
-<pre><code>rmc.run_rmc(num_processes=int, initial_structure=str, keV=int, prdf_args={“bin_size:float}, transformations={“AtomHop”:{}}, validators={args}, max_steps=int)
+<pre><code>rmc.run_rmc(
+    num_processes=int, 
+    initial_structure=str, 
+    keV=int, 
+    prdf_args={“bin_size:float}, 
+    transformations={“AtomHop”:{}}, 
+    validators={args}, 
+    max_steps=int
+    )
 </code></pre>
 <ul>
-<li>num_processes = the number of processes to use in the simulation. If a serial simulation is desired, set to 1. </li>
-<li>initial_structure = the filename of the structure file to use as an initial configuration. This file must be in a POSCAR/VASP format. The structure should have the correct stoichiometry, sincve HRMC does not affect the composition of the structure. </li>
-<li>keV = the accelerating voltage of the electron microsope used to capture scattering data</li>
-<li>prdf_args<ul>
-<li>bin_size: the bin size of the computed PDFs, in angstroms. Default is 0.04 angstroms.</li>
+<li><strong>num_processes:</strong> the number of processes to use in the simulation. If a serial simulation is desired, set to 1. If greater than 1, pyHRMC performs the simulation in iterations. In each iteration, a number of Monte Carlo steps equal to <code>num_processes</code> will be independently generated and validated in parallel. Accepted individual steps will then be merged and re-tested in a single structure, which constitutes one iteration. Therefore, the total number of steps will always be equal to <code>num_processes</code> x the number of completed iterations. This distinction is particularly important when selecting <code>q_scatter</code> and <code>q_temp</code> and interpreting output files.</li>
+<li><strong>initial_structure:</strong> the filename of the structure file to use as an initial configuration. This file must be in a POSCAR/VASP format. The structure should have the correct stoichiometry, sincve HRMC does not affect the composition of the structure. </li>
+<li><strong>keV:</strong> the accelerating voltage of the electron microsope used to capture scattering data</li>
+<li><strong>prdf_args</strong><ul>
+<li><strong>bin_size:</strong> the bin size of the computed PDFs, in angstroms. Default is 0.04 angstroms.</li>
 </ul>
 </li>
-<li>transformations<ul>
-<li>AtomHop: currently the only kind of transformation available in pyHRMC. This transformation creates a spherical grid of radius 1 Angstrom around an atom and selects a cell within the grid randomly. The coordinates of the selected cell are treated as the new coordinates of the atom. This transformer only moves one atom at a time, but this action can be parallelized for major speedups and yield structures with multiple moved atoms in a single step.</li>
+<li><strong>transformations</strong><ul>
+<li><strong>AtomHop:</strong> currently the only kind of transformation available in pyHRMC. This transformation creates a spherical grid of radius 1 Angstrom around an atom and selects a cell within the grid randomly. The coordinates of the selected cell are treated as the new coordinates of the atom. This transformer only moves one atom at a time, but this action can be parallelized for major speedups and yield structures with multiple moved atoms in a single step.</li>
 </ul>
 </li>
 <li>
-<p>validators = details on available validators can be found on the <a href="http://127.0.0.1:8000/user_guide/validator_selection/">Validator selection</a> page.</p>
+<p><strong>validators:</strong> details on available validators can be found on the <a href="http://127.0.0.1:8000/user_guide/validator_selection/">validator selection</a> page.</p>
 <ul>
-<li>SlabThickness</li>
-<li>Coordination <ul>
-<li>BulkCoordinationRange</li>
-<li>SurfaceCoordinationRange</li>
-<li>SurfaceDistance</li>
+<li><strong>SlabThickness</strong></li>
+<li><strong>Coordination</strong> <ul>
+<li><strong>BulkCoordinationRange</strong></li>
+<li><strong>SurfaceCoordinationRange</strong></li>
+<li><strong>SurfaceDistance</strong></li>
 </ul>
 </li>
+<li><strong>DistancesCoordination</strong><ul>
+<li><strong>MinDistances</strong></li>
+<li><strong>BulkCoordinationRange</strong></li>
+<li><strong>SurfaceCoordinationRange</strong></li>
+<li><strong>SurfaceDistance</strong></li>
+</ul>
+</li>
+<li><strong>SiteDistances</strong></li>
+<li><strong>TargetDensity</strong></li>
 </ul>
 </li>
 <li>
-<p>max_steps = maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </p>
+<p><strong>max_steps:</strong> maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </p>
 </li>
 </ul>
 <h2 id="example">Example</h2>
-<p>An example runfile.py for a simulation of amorphous Al2O3 is shown below:</p>
+<p>An example runfile.py for a simulation of amorphous alumina is shown below:</p>
 <pre><code>from pyHRMC.core.rmc import RMC
 import multiprocessing
 
@@ -174,56 +248,84 @@ if __name__ == &quot;__main__&quot;:
 
         max_steps= 1000000,
     )
-</code></pre>
-              
+</code></pre></div>
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../required_files/" class="btn btn-neutral float-left" title="Required files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../lammps_input/" class="btn btn-neutral float-right" title="LAMMPS input files">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
-
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
-          
         </div>
-      </div>
 
-    </section>
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../javascripts/mathjax.js"></script>
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="../../../search/main.js"></script>
 
-  </div>
-
-  <div class="rst-versions" role="note" aria-label="Versions">
-  <span class="rst-current-version" data-toggle="rst-current-version">
-    
-        <span>
-          <a href="https://github.com/ehrhardtkm/pyHRMC" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
-        </span>
-    
-    
-      <span><a href="../required_files/" style="color: #fcfcfc">&laquo; Previous</a></span>
-    
-    
-      <span><a href="../lammps_input/" style="color: #fcfcfc">Next &raquo;</a></span>
-    
-  </span>
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
 </div>
-    <script src="../../../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "../../..";</script>
-    <script src="../../../js/theme_extra.js"></script>
-    <script src="../../../js/theme.js"></script>
-      <script src="../../../search/main.js"></script>
-    <script>
-        jQuery(function () {
-            SphinxRtdTheme.Navigation.enable(true);
-        });
-    </script>
 
-</body>
+    </body>
 </html>

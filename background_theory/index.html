@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>About HRMC - pyHRMC</title>
+        <title>Theory - pyHRMC</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/fontawesome.min.css" rel="stylesheet">
         <link href="../css/brands.min.css" rel="stylesheet">
@@ -42,7 +42,7 @@
                                 <a href="../installation/" class="nav-link">Installation</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../background_theory/" class="nav-link">Theory</a>
+                                <a href="./" class="nav-link active" aria-current="page">Theory</a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">User Guide</a>
@@ -97,6 +97,16 @@
                                 <i class="fa fa-search"></i> Search
                             </a>
                         </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../installation/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../user_guide/getting_started/required_files/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
                     </ul>
                 </div>
             </div>
@@ -115,8 +125,20 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="1"><a href="#about-hrmc" class="nav-link">About HRMC</a>
+            <li class="nav-item" data-bs-level="1"><a href="#theory" class="nav-link">Theory</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#monte-carlo-and-loss-function" class="nav-link">Monte Carlo and loss function</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#hybrid-reverse-monte-carlo-hrmc" class="nav-link">Hybrid Reverse Monte Carlo (HRMC)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#quench-schemes" class="nav-link">Quench schemes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -124,12 +146,48 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="about-hrmc">About HRMC</h1>
-<p>Hybrid Reverse Monte Carlo (HRMC) is a computational method stochastically perturbs atomic coordinates to fit a structure to experimental structural data. Typically, this data is a pair distribution function (PDF) that is collected from x-ray, neutron, or electron sources. In particular, electron scattering is advantageous or nanoscale and ultrathin materials because of the high resolution and high scattering cross-section of electrons. As materials become increasingly nanoscale, the ability to experimentally collect scattering information from disordered materials is useful. However, PDFs provide limited information on the atomistic arrangement of atoms.</p>
-<p>This is where Reverse Monte Carlo (RMC) comes in. In traditional implementations of RMC, the simulation is designed to gradually fit a computed PDF of a cell to an experimental PDF by way of random atomic hops, according to the standard Metropolis Monte Carlo algorithm. While this approach is effective at matching the experimental and computed PDFs, it can fail to produce physically realistic structures. This flaw is due to the stochastic nature of the algorithm, and the limited chemical information that guides the simulation. Often, users specify coordination number and bond angle ranges, minimum bond distances, and more to try to constrain the simulation sufficiently to produce realistic structures. However, these inputs require the user to possess a high degree of understanding about the system that they are trying to model and the accuracy of the simulated structure depends heavily on these parameters. </p>
-<p>To mitigate the issue of user-selected constraint parameters, HRMC was introduced. In addition to fitting the compute PDF to experimental data, HRMC also includes a Boltzmann-type probability term to account for the energy of the structure. This approach therefore effectively minimizes the structural energy while finding and experimental fit, resulting in more flexible constraints to better allow transition states during atom hopping and has been shown to more accurately reproduce chemically accurate structures.</p>
-<p>pyHRMC is a Python implementation of this HRMC algorithm, with several added features. </p>
-<p>Questions or concerns? Contact kme@email.unc.edu</p></div>
+<h1 id="theory">Theory</h1>
+<h2 id="monte-carlo-and-loss-function">Monte Carlo and loss function</h2>
+<p>The H/RMC algorithm employs the Metropolis Markov chain Monte Carlo method to stochastically sample atomistic configurations of a structure. The simulations converge by minimizing a loss function, which follows the general form:</p>
+<div class="arithmatex">\[
+\chi^{2}_{total} = \sum_{i}^{n} \sum_{j} \frac{(A_{i}(j)_{target} - A_{i}(j)_{calc})^{2}} {W_{i}} .
+\]</div>
+<p>Here, the total loss <span class="arithmatex">\(\chi^{2}_{total}\)</span> is summed over the <em>n</em> constraints that guide the simulation. Each term in the loss function represents a squared difference between the calculated value <em><span class="arithmatex">\(A_{calc}\)</span></em> and the target value <em><span class="arithmatex">\(A_{target}\)</span></em>, scaled by a weight term <em><span class="arithmatex">\(W_{i}\)</span></em>. The number of terms in this function depends on the constraints that are defined by the user. Typically, in RMC simulations, this loss function includes an error term that fits the calculated pair distribution function (PDF) to experimental PDF data </p>
+<div class="arithmatex">\[
+\chi^{2}_{error} = \sum_{i}^{n_{bin}}\frac{(G(r_{i})_{target} - G(r_{i})_{calc})^{2}} {\sigma_{}} .
+\]</div>
+<p>where the squared difference between the experimental/target PDF <span class="arithmatex">\(G(r)_{target}\)</span> and the calculated PDF <span class="arithmatex">\(G(r)_{calc}\)</span> of the Monte Carlo structure is scaled with <em><span class="arithmatex">\(\sigma\)</span></em>, the experimental error that acts as the weight term, and is summed over <span class="arithmatex">\(n_{bin}\)</span>, the number of bins of <span class="arithmatex">\(G(r)_{target}\)</span>. </p>
+<p>In pyHRMC, the PDF is always assumed to be the electron pair distribution function (ePDF). This distinction is critical because the scattering cross-sections used to calculate the theoretical electron scattering—and, consequently, the PDF—depend on the ePDF of the simulated structure.</p>
+<p>While RMC is effective at matching a structure's calculated ePDF to experimental data, it cannot produce a unique solution. In other words, RMC may arrive at one of many different atomistic configurations can produce approximately the same ePDF. . This ambiguity can be somewhat mitigated by choosing simulation cells large enough to yield a statistically robust distribution of coordination environments. However, under-constrained RMC simulations may still produce unrealistic configurations.</p>
+<h2 id="hybrid-reverse-monte-carlo-hrmc">Hybrid Reverse Monte Carlo (HRMC)</h2>
+<p>To address this limitation, HRMC was introduced by Opletal et al. in 2002 (see ref 1). In HRMC, an additional energy term is included in the total loss function, leading to the following form:</p>
+<div class="arithmatex">\[
+\chi^{2}_{total} = \chi^{2}_{error} + \frac { \Delta E} {k_{B}T}
+\]</div>
+<p>Similar to the error term, the energy term is scaled by a temperature variable (T). This addition results in a Boltzmann-type probability distribution, where the algorithm may accept a step even when the energy loss term increases.</p>
+<p><strong>BUG</strong>
+The program will always accept the proposed Monte Carlo step if the new loss value <span class="arithmatex">\(\chi^{2}_{new}\)</span> is less than old loss value <span class="arithmatex">\(\chi^{2}_{old}\)</span>. Otherwise, the probability of accepting a move is:</p>
+<div class="arithmatex">\[
+P = e^{\chi^{2}_{old} - \chi^{2}_{new}}
+\]</div>
+<h2 id="quench-schemes">Quench schemes</h2>
+<p>As noted above, the weight term in each loss function affects the Boltzmann-type probability distribution of accepting a "worse" step. In traditional RMC, where the PDF error term is the sole contributor to the loss function <span class="arithmatex">\(\chi^{2}_{total}\)</span>, this weight <span class="arithmatex">\(\sigma\)</span> is typically kept static throughout the simulation. However, initializing the simulation with greater weight terms and gradually reducing them can help optimize convergence. This approach allows the structure to explore a broader structural space early on while still refining toward a low loss value as the simulation progresses.</p>
+<p>This following quenching scheme was introduced by Opletal et al. and has been implemented in pyHRMC:</p>
+<div class="arithmatex">\[
+T_{n+1} = T_{n} * q_{T}^{n} 
+\]</div>
+<div class="arithmatex">\[
+\sigma_{n+1} = \sigma_{n} * q_{\sigma}^{n} ,
+\]</div>
+<p>where n is the number of steps in millions, and q is a quenching parameter between 0-1. Because H/RMC is performed over millions of steps and gradual quenching is necessary for proper convergence, q is typically very close to 1.</p>
+<p>When selecting values for these quenching parameters in pyHRMC, note the distinction between a <a href="https://ehrhardtkm.github.io/pyHRMC/runfile_setup/">step and an iteration</a>. Quenching will occur after each <em>iteration</em>, so greater parallelization will result in a slightly coarser quenching scheme.</p>
+<hr />
+<p>For further details and examples in the literature, we suggest the following references:</p>
+<ol>
+<li><a href="https://www.tandfonline.com/doi/abs/10.1080/089270204000002584?casa_token=Il9_dIbtCoIAAAAA:FSzPAgSfbQ2FLkG7_C5VcxNbZhqkeCQJLu-GlYR4s9L090xkQ5KbigcF8idYFZ56FoHBulHD11TD">Opletal, G., Petersen, T., O’Malley, B., Snook, I., McCulloch, D. G., Marks, N. A., &amp; Yarovsky, I. Hybrid approach for generating realistic amorphous carbon structure using metropolis and reverse Monte Carlo. Molecular Simulation, 2002, 28(10–11), 927–938. https://doi.org/10.1080/089270204000002584</a></li>
+<li><a href="https://www.sciencedirect.com/science/article/pii/S0010465508000039">G. Opletal, T.C. Petersen, B. O'Malley, I.K. Snook, D.G. McCulloch, I. Yarovsky. HRMC: Hybrid Reverse Monte Carlo method with silicon and carbon potentials. Comput. Phys. Commun., 2008, 178 (10), 777-787. https://doi.org/10.1016/j.cpc.2007.12.007.</a></li>
+<li><a href="https://www.sciencedirect.com/science/article/pii/S0008622314010859">Amir H. Farmahini, Suresh K. Bhatia. Hybrid Reverse Monte Carlo simulation of amorphous carbon: Distinguishing between competing structures obtained using different modeling protocols. Carbon, 2015, 83, 53-70. https://doi.org/10.1016/j.carbon.2014.11.013.</a></li>
+</ol></div>
             </div>
         </div>
 
