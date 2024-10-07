@@ -1,11 +1,21 @@
 site_name: pyHRMC
-site_url: "https://ehrhardtkm.github.io/pyHRMC/"
-repo_url: "https://github.com/ehrhardtkm/pyHRMC"
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+extra_css:
+  - css/extra.css
 
 nav:
   - Home: index.md
-  - About: about.md
   - Installation: installation.md
+  - Theory: background_theory.md
   - User Guide: 
     - Getting started: 
         - Required files: user_guide/getting_started/required_files.md
@@ -13,7 +23,10 @@ nav:
         - LAMMPS input files: user_guide/getting_started/lammps_input.md
         - Understanding outputs: user_guide/getting_started/outputs.md
     - Validator selection: user_guide/validator_selection.md
-    - Bulk vs slab cells: user_guide/bulk_vs_slab.md
-    - Non-hybrid simulations: user_guide/nonhybrid_setup.md
+    - Additional choices:
+        -  Non-hybrid simulations: user_guide/nonhybrid_setup.md
+        - Bulk vs slab cells: user_guide/bulk_vs_slab.md
 
-theme: readthedocs
+theme: 
+  name: flatly
+  nav_style: primary

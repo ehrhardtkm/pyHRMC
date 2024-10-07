@@ -13,32 +13,38 @@ Four sections are required for the in.lmp file: Initialization, Atom groups, Com
 ```
 read_data data.lmp
 ```
-Additionally, is using a potential model trained from FLARE, follow instructions in [their documentation](https://colab.research.google.com/drive/1qgGlfu1BlXQgSrnolS4c4AYeZ-2TaX5Y#scrollTo=VYJVQ7XSWUEq) to include this in the input script.
+Additionally, if using a potential model trained from FLARE, follow instructions in [their documentation](https://colab.research.google.com/drive/1qgGlfu1BlXQgSrnolS4c4AYeZ-2TaX5Y#scrollTo=VYJVQ7XSWUEq) to include this in the input script.
 ```
 pair_style    flare
 pair_coeff    * * lmp.flare
 ```
-**Atom groups:** Add the mass and element names of the elements in the cell. The numbering of the atom types will follow the order of atoms in the original structure file
+**Atom groups:** Add the mass and element names. The numbering of the atom types must follow the order of atoms in the original structure file.
 ```
 mass {atom_type} {float}
-
 group {element_name} type {atom_type}
 ```
-**Compute and outputs**
+**Compute and outputs:** Include commands to compute and print any additional desired variables. Any commands in this section are optional. The program will automatically extract the potential energy of the structure and dump the trajectory into the XDATCAR file, but additional desired outputs can be included here and dumped into a separate file.
+
+If using a FLARE potential, the uncertainty of the potential can be dumped on a per-atom basis. If the uncertainty is computed, LAMMPS can dump the trajectory in a file which can be used to visualize the uncertainty in OVITO. Detailed instructions can be found in this [tutorial notebook](https://colab.research.google.com/drive/1qgGlfu1BlXQgSrnolS4c4AYeZ-2TaX5Y#scrollTo=TH2-qLxsaN89). In the input script, include the following lines to compute the uncertainty-per-atom and the maximum atomic uncertainty and dump the uncertainty to a trajectory file called `output.dump`.
+
 ```
-thermo 1
-thermo_style custom step pe ke etotal
+compute unc all flare/std/atom L_inv_lmp.flare sparse_desc_lmp.flare
+compute MaxUnc all reduce max c_unc
+
+# Define the dump file and append to it
+dump dump_all all custom 1 output.dump id type x y z c_unc
+dump_modify dump_all append yes sort id
 ```
+
+While a thermo and thermo_style command can also be included, it is not very useful, given that the LAMMPS is called repeatedly in HRMC instead of running a single LAMMPS run over the entire simulation. 
 
 **Run:** Run the LAMMPS code for 0 timesteps, meaning that it will only perform the desired computes and not perform any molecular dynamics
 ```
 # Run the simulation
 run 0
-write_data out4.txt nocoeff nofix
 ```
 
-Example
----
+### Example
 ```
 # Initialization
 atom_style atomic
@@ -71,7 +77,6 @@ thermo_style custom step pe ke etotal
 
 # Run the simulation
 run 0
-write_data out4.txt nocoeff nofix
 ```
 
 in_init.lmp
