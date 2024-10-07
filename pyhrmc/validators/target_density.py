@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from pyHRMC.validators import Validator
+from pyhrmc.validators import Validator
+
 
 class TargetDensity(Validator):
     """
@@ -18,15 +19,8 @@ class TargetDensity(Validator):
         self.check_slab = check_slab
 
     def check_structure(self, structure):
-        density = (
-            structure.density
-            if not self.check_slab
-            else structure.slab_density
-        )
-        if (
-            abs(density - self.target_density) / density
-            > self.percent_allowance
-        ):
+        density = structure.density if not self.check_slab else structure.slab_density
+        if abs(density - self.target_density) / density > self.percent_allowance:
             print(density)
             return False
         return True

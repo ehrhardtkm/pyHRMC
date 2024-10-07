@@ -4,7 +4,7 @@ import itertools
 
 import numpy
 
-from pyHRMC.validators import Validator
+from pyhrmc.validators import Validator
 
 
 class SiteDistance(Validator):

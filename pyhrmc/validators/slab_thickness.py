@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from pyHRMC.validators import Validator
+from pyhrmc.validators import Validator
+
 
 class SlabThickness(Validator):
     """
@@ -11,10 +12,10 @@ class SlabThickness(Validator):
 
     def __init__(self, max_thickness):
         self.max_thickness = max_thickness
-        
+
     def check_structure(self, structure):
-        slab_thickness = structure.thickness_z['thickness']
+        slab_thickness = structure.thickness_z["thickness"]
         if slab_thickness > self.max_thickness:
-            print(f'slab_thickness = {slab_thickness}')
+            print(f"slab_thickness = {slab_thickness}")
             return False
         return True

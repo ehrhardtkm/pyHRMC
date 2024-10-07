@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Edited PyMatGen rdf.py for speed
+Edited matminer rdf.py for speed
 Only the PartialRadialDistributionFunction class
+This code is licensed under a BSD-style license that can be found in the LICENSE.md file
 
 """
 
@@ -41,13 +42,23 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
 
     """
 
-    def __init__(self, cutoff=10.0, bin_size=0.1, el_switch=[], el_list=[],include_elems=(), exclude_elems=()):
+    def __init__(
+        self,
+        cutoff=10.0,
+        bin_size=0.1,
+        el_switch=[],
+        el_list=[],
+        include_elems=(),
+        exclude_elems=(),
+    ):
         self.cutoff = cutoff
         self.bin_size = bin_size
         self.el_switch = el_switch
         self.el_list = el_list
         self.elements_ = None
-        self.include_elems = list(include_elems)  # Makes sure the element lists are ordered
+        self.include_elems = list(
+            include_elems
+        )  # Makes sure the element lists are ordered
         self.exclude_elems = list(exclude_elems)
 
     def precheck(self, s):
@@ -79,7 +90,12 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
 
         # Get all of elements that appaer
         for strc in X:
-            elements.update([e.element if isinstance(e, Specie) else e for e in strc.composition.keys()])
+            elements.update(
+                [
+                    e.element if isinstance(e, Specie) else e
+                    for e in strc.composition.keys()
+                ]
+            )
 
         # Remove the elements excluded by the user
         elements.difference_update([Element(e) for e in self.exclude_elems])
@@ -118,9 +134,8 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
         return np.hstack(output)
 
     def compute_prdf(self, s, neighborlist):
-    
         """Compute the PRDF for a structure
-    
+
         Args:
             s: (Structure), structure to be evaluated
         Returns:
@@ -128,48 +143,55 @@ class PartialRadialDistributionFunction(BaseFeaturizer):
             prdf - dict, where the keys is a pair of elements (strings),
                 and the value is the radial distribution function for those paris of elements
         """
-    
-        
+
         # Get the composition of the array
         s = copy(s)
         s.remove_oxidation_states()
         composition = s.composition.fractional_composition.to_reduced_dict
-        
+
         # Get the distances between all atoms, cutoff of sphere radius = 20.0
         neighbors_lst = neighborlist
-        #neighbors_lst = s.get_all_neighbors(self.cutoff)
+        # neighbors_lst = s.get_all_neighbors(self.cutoff)
         # neighbors_lst = self.get_all_neighbors(r=20.0)
         # Sort neighbors by type
         distances_by_type = {}
         for p in itertools.product(composition.keys(), composition.keys()):
             distances_by_type[p] = []
-    
+
         def get_symbol(s, site):
             idx = bisect.bisect_right(self.el_switch, site)
             return self.el_list[idx]
 
-        for site, nlst in zip(enumerate(s.sites), neighbors_lst):  # Each list is a list for each site
+        for site, nlst in zip(
+            enumerate(s.sites), neighbors_lst
+        ):  # Each list is a list for each site
             my_elem = get_symbol(s, site[0])
             for neighbor in nlst:
-                rij = neighbor['nn_distance']
-                n_elem = get_symbol(s, neighbor['index'])
+                rij = neighbor["nn_distance"]
+                n_elem = get_symbol(s, neighbor["index"])
                 distances_by_type[(my_elem, n_elem)].append(rij)
-    
+
         # Compute and normalize the prdfs
         prdf = {}
         dist_bins = self._make_bins()
-        shell_volume = 4.0 / 3.0 * math.pi * (np.power(dist_bins[1:], 3) - np.power(dist_bins[:-1], 3))
+        shell_volume = (
+            4.0
+            / 3.0
+            * math.pi
+            * (np.power(dist_bins[1:], 3) - np.power(dist_bins[:-1], 3))
+        )
         for key, distances in distances_by_type.items():
             # Compute histogram of distances
-            dist_hist, dist_bins = np.histogram(distances, bins=dist_bins, density=False)
+            dist_hist, dist_bins = np.histogram(
+                distances, bins=dist_bins, density=False
+            )
             # Normalize
             n_alpha = composition[key[0]] * s.num_sites
             rdf = dist_hist / shell_volume / n_alpha
-    
-            prdf[key] = rdf
-    
-        return dist_bins[:-1], prdf        
 
+            prdf[key] = rdf
+
+        return dist_bins[:-1], prdf
 
     def _make_bins(self):
         """Generate the edges of the bins for the PRDF
