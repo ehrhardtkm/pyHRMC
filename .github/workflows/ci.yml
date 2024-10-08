@@ -39,13 +39,14 @@ jobs:
         sudo apt-get install -y cmake build-essential libfftw3-dev libblas-dev liblapack-dev
         git clone -b stable https://github.com/lammps/lammps.git
         pwd
+        ls -a
         cd flare/lammps_plugins
         pwd
         ./install.sh ../../lammps  
-        cd ../
+        cd ../../
         pwd
         git clone https://gitlab.com/libeigen/eigen.git
-        mv eigen/Eigen ../lammps
+        mv eigen/Eigen lammps
 
         cd lammps
         mkdir build
