@@ -26,14 +26,31 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+
+    - name: Install FLARE
+      run: |
+        git clone https://github.com/mir-group/flare.git
+        cd flare
+        python -m pip install .        
+
     - name: Install LAMMPS in serial
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake build-essential libfftw3-dev libblas-dev liblapack-dev
         git clone -b stable https://github.com/lammps/lammps.git
+        pwd
+        cd flare/lammps_plugins
+        pwd
+        ./install.sh ../../lammps  
+        cd ../
+        pwd
+        git clone https://gitlab.com/libeigen/eigen.git
+        mv eigen/Eigen ../lammps
+
         cd lammps
         mkdir build
         cd build
+        pwd
         cmake ../cmake -DBUILD_MPI=OFF -DPKG_MANYBODY=ON -DPKG_KSPACE=ON -D BUILD_SHARED_LIBS=yes
         make -j4
         sudo make install-python
@@ -43,18 +60,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest pytest-cov
         pip install .
-
-    - name: Install FLARE
-      run: |
-        git clone https://github.com/mir-group/flare.git
-        cd flare
-        python -m pip install .
-
-    - name: Install FLARE LAMMPS plugins
-      run: |
-        cd flare/lammps_plugins
-        ./install.sh ../../lammps  
-
 
     - name: Run tests
       run: |
