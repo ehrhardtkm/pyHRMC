@@ -11,14 +11,13 @@ readme = "README.md"
 authors = [
   {name = "Karen M. Ehrhardt", email = "kme@email.unc.edu"}
 ]
-readme = "README.md"
 keywords = ["Hybrid Reverse Monte Carlo", "HRMC", "Amorphous materials"]
 classifiers = [
   "Programming Language :: Python :: 3.11",
   "Operating System :: OS Independent"
 ]
 license = {text = "BSD-3-Clause"}
-requires-python = "==3.11"
+requires-python = ">=3.9,<3.12"
 dependencies = [
   "ase",
   "matminer",
