@@ -1,0 +1,45 @@
+# Initialization
+atom_style atomic
+units metal
+boundary p p p
+atom_modify sort 0 0.0
+newton on
+
+read_data data.lmp                                                                            
+
+### interactions
+pair_style flare
+pair_coeff * * tests/data/s_lmp.flare
+
+# Groups
+mass 1 26.981539
+mass 2 15.9994
+
+group Al type 1
+group O type 2
+
+
+#Uncertainty
+compute unc all flare/std/atom tests/data/s_L_inv_lmp.flare tests/data/s_sparse_desc_lmp.flare
+compute MaxUnc all reduce max c_unc
+
+
+dump dump_all all custom 10 output.dump id type x y z c_unc
+dump_modify dump_all sort id
+
+
+# Save the final timestep to a file
+variable    last_step equal "step"
+shell       echo ${last_step} > last_step.txt
+
+
+# Output
+thermo 1
+thermo_style custom step pe ke etotal
+
+
+# Run the Simulation
+run 0
+
+write_data out4.txt nocoeff nofix
+

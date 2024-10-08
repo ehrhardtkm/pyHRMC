@@ -1,0 +1,37 @@
+name: pyHRMC CI
+
+on:
+  push:
+    branches:
+      - main  # Run on pushes to the main branch
+  pull_request:
+    branches:
+      - main  # Run on pull requests to the main branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  # Specify the OS for the CI run
+
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, 3.10, 3.11]  # Define the versions of Python to test on
+
+    steps:
+    - name: Check out repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+        pip install .
+
+    - name: Run tests
+      run: |
+        pytest
+         pytest --cov=your_package tests/
