@@ -44,11 +44,17 @@ jobs:
         pip install pytest pytest-cov
         pip install .
 
-    - name: Install flare
+    - name: Install FLARE
       run: |
         git clone https://github.com/mir-group/flare.git
         cd flare
         python -m pip install .
+
+    - name: Install FLARE LAMMPS plugins
+      run: |
+        cd flare/lammps_plugins
+        ./install.sh ../../lammps  
+
 
     - name: Run tests
       run: |
