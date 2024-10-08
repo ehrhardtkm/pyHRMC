@@ -46,11 +46,9 @@ jobs:
 
     - name: Install flare
       run: |
-        git clone https://github.com/mir-group/flare.git
-        cd flare
-        python -m pip install .
+        pip install mir-flare
 
     - name: Run tests
       run: |
-        pytest
-         pytest --cov=your_package tests/
+        pytest tests/
+        pytest --cov=your_package tests/
