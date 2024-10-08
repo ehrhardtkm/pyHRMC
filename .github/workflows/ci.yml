@@ -34,9 +34,9 @@ jobs:
         cd lammps
         mkdir build
         cd build
-        cmake ../cmake -DBUILD_MPI=OFF -DPKG_MANYBODY=ON -DPKG_KSPACE=ON
+        cmake ../cmake -DBUILD_MPI=OFF -DPKG_MANYBODY=ON -DPKG_KSPACE=ON -D BUILD_SHARED_LIBS=yes
         make -j4
-        sudo make install
+        sudo make install-python
 
     - name: Install dependencies
       run: |
