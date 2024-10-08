@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11']  # Define the versions of Python to test on
+        python-version: ['3.10', '3.11']  # Define the versions of Python to test on
 
     steps:
     - name: Check out repo
@@ -24,6 +24,11 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Load LAMMPS and FLARE modules
+      run: |
+        module load lammps/v13-serial-flare
+        module load flare
 
     - name: Install dependencies
       run: |
