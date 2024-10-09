@@ -1,4 +1,3 @@
-
 import os
 import pytest
 from pyhrmc.core.rmc import RMC
