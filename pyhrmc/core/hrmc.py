@@ -50,6 +50,7 @@ class Lammps_HRMC:
                 if line.startswith("read_data"):
                     self.lmp.command(f"read_data {self.task_id}.lmp")
                 else:
+                    print(line)
                     self.lmp.command(line)
 
         self.lmp.command("variable e equal pe")

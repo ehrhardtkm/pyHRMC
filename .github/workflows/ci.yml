@@ -12,8 +12,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest  # Specify the OS for the CI run
-    # container:
-    #   image: ehrhardtkm/lammps-flare:latest
+    container:
+      image: ehrhardtkm/lammps-flare:ubuntu22
 
     strategy:
       matrix:
@@ -30,37 +30,37 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
 
-    - name: Install FLARE
-      run: |
-        pwd
-        git clone https://github.com/mir-group/flare.git
-        cd flare
-        python -m pip install .      
-        pwd  
+    # - name: Install FLARE
+    #   run: |
+    #     pwd
+    #     git clone https://github.com/mir-group/flare.git
+    #     cd flare
+    #     python -m pip install .      
+    #     pwd  
 
-    - name: Install LAMMPS in serial
-      run: |
-        pwd
-        ls
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential libfftw3-dev libblas-dev liblapack-dev
-        git clone -b stable https://github.com/lammps/lammps.git
+    # - name: Install LAMMPS in serial
+    #   run: |
+    #     pwd
+    #     ls
+    #     sudo apt-get update
+    #     sudo apt-get install -y cmake build-essential libfftw3-dev libblas-dev liblapack-dev
+    #     git clone -b stable https://github.com/lammps/lammps.git
 
-        cd flare/lammps_plugins/
-        pwd
-        ls
-        pwd ../../
-        ls ../../
-        ./install.sh ../../lammps/
+    #     cd flare/lammps_plugins/
+    #     pwd
+    #     ls
+    #     pwd ../../
+    #     ls ../../
+    #     ./install.sh ../../lammps/
         
-        cd ../../lammps
-        pwd
-        mkdir build
-        cd build
-        pwd
-        cmake ../cmake  -DBUILD_MPI=OFF  -DPKG_MANYBODY=ON -DPKG_KSPACE=ON -DPKG_MACHDYN=yes -DDOWNLOAD_EIGEN3=yes -D BUILD_SHARED_LIBS=yes 
-        make VERBOSE=1 -j4
-        make install-python
+    #     cd ../../lammps
+    #     pwd
+    #     mkdir build
+    #     cd build
+    #     pwd
+    #     cmake ../cmake  -DBUILD_MPI=OFF  -DPKG_MANYBODY=ON -DPKG_KSPACE=ON -DPKG_MACHDYN=yes -DDOWNLOAD_EIGEN3=yes -D BUILD_SHARED_LIBS=yes 
+    #     make VERBOSE=1 -j4
+    #     make install-python
 
     - name: Install dependencies
       run: |
