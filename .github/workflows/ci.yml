@@ -82,11 +82,6 @@ jobs:
         make VERBOSE=1 -j4
         make install-python
 
-    - name: Patch ASE
-      run: |
-        ase_file="$(dirname $(python3 -c 'import ase; print(ase.__file__)'))/calculators/lammpsrun.py"
-        sed -i 's/line.startswith(_custom_thermo_mark)/line.strip\(\).startswith\("Step"\)/g' $ase_file
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
