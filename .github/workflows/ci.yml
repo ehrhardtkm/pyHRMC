@@ -49,10 +49,6 @@ jobs:
         cd build
         cmake ..
         make -j
-        cp _C_flare*.so ../flare/bffs/sgp
-        cd ..
-
-        export PYTHONPATH=${PYTHONPATH}:<current_dir>
 
 
 
