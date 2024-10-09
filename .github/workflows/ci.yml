@@ -50,6 +50,12 @@ jobs:
         cmake ..
         make -j
 
+        cp _C_flare*.so ../flare/bffs/sgp
+        cd ..
+        pwd
+        ls
+        export PYTHONPATH=${PYTHONPATH}:$(pwd)
+
 
 
     - name: Install LAMMPS in serial
