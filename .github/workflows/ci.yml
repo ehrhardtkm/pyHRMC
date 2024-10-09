@@ -39,7 +39,6 @@ jobs:
         sudo apt-get install -y cmake build-essential libfftw3-dev libblas-dev liblapack-dev
         git clone -b stable https://github.com/lammps/lammps.git
         pwd
-        ls -a
         cd flare/lammps_plugins
         pwd
         ./install.sh ../../lammps  
@@ -47,13 +46,18 @@ jobs:
         pwd
         git clone https://gitlab.com/libeigen/eigen.git
         mv eigen/Eigen lammps
+        pwd
+
+        # Navigate to LAMMPS directory and insert Eigen include directories
+        sed -i '/project/a target_include_directories(lammps PUBLIC ../eigen/Eigen)' lammps/cmake/CMakeLists.txt
+
 
         cd lammps
         mkdir build
         cd build
         pwd
-        cmake ../cmake -DBUILD_MPI=OFF -DPKG_MANYBODY=ON -DPKG_KSPACE=ON -D BUILD_SHARED_LIBS=yes
-        make -j4
+        cmake ../cmake -DBUILD_MPI=OFF -DPKG_MANYBODY=ON -DPKG_KSPACE=ON -D BUILD_SHARED_LIBS=yes  
+        make VERBOSE=1 -j4
         sudo make install-python
 
     - name: Install dependencies
