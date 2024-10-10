@@ -347,11 +347,10 @@ class RMC:
             el_charge = charges[el]
             TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV)
 
-        # BUG: FOR TROUBLEHSOOTING ONLY, FIX THIS
-        # setattr(initial_structure, 'TCSs', TCS)
-        CROSS_SECTIONS_CONSTANTS = {"Al": 5.704193e-2, "O": 2.029453e-2, "H": 1.04e-4}
-        setattr(initial_structure, "TCSs", CROSS_SECTIONS_CONSTANTS)
-        print(initial_structure.TCSs)
+        setattr(initial_structure, 'TCSs', TCS)
+        # CROSS_SECTIONS_CONSTANTS = {"Al": 5.704193e-2, "O": 2.029453e-2, "H": 1.04e-4}
+        # setattr(initial_structure, "TCSs", CROSS_SECTIONS_CONSTANTS)
+        # print(initial_structure.TCSs)
 
         # load experimental G(r)
         initial_structure.load_experimental_from_file(self.experimental_G_csv)

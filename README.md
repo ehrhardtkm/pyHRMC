@@ -1,3 +1,8 @@
+![CI](https://github.com/ehrhardtkm/pyhrmc/actions/workflows/ci.yml/badge.svg)
+![License: BSD](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)
+![Python Versions](https://img.shields.io/pypi/pyversions/pyhrmc)
+[![Documentation](https://img.shields.io/badge/docs-pyHRMC-blue)](https://ehrhardtkm.github.io/pyHRMC/)
+
 About 
 --- 
 pyHRMC is designed for HRMC simulations using experimental electron pair distribution functions as a primary constraint. This packagerelies heavily and uses code from [pymatgen](https://pymatgen.org/), which is released under the MIT license.
