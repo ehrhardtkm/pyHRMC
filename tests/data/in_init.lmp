@@ -9,9 +9,9 @@ read_data data.lmp
 
 ### interactions
 pair_style flare
-shell cat head s_lmp.flare
+shell cat head tests/s_lmp.flare
 
-pair_coeff * * s_lmp.flare
+pair_coeff * * tests/s_lmp.flare
 
 # Groups
 mass 1 26.981539
