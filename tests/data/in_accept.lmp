@@ -9,7 +9,7 @@ read_data data.lmp
 
 ### interactions
 pair_style flare
-pair_coeff * * tests/data/s_lmp.flare
+pair_coeff * * data/s_lmp.flare
 
 # Groups
 mass 1 26.981539
@@ -26,7 +26,7 @@ reset_timestep ${last_step}
 
 
 #Uncertainty
-compute unc all flare/std/atom tests/data/s_L_inv_lmp.flare tests/data/s_sparse_desc_lmp.flare
+compute unc all flare/std/atom data/s_L_inv_lmp.flare data/s_sparse_desc_lmp.flare
 compute MaxUnc all reduce max c_unc
 
 
