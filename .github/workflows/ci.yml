@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # Run on pushes to the main branch
+      - test-ci
   pull_request:
     branches:
       - main  # Run on pull requests to the main branch
@@ -15,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10', '3.11']  # Define the versions of Python to test on
-
+         
     steps:
     - name: Check out repo
       uses: actions/checkout@v3
@@ -25,11 +26,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Load LAMMPS and FLARE modules
-      run: |
-        module load lammps/v13-serial-flare
-        module load flare
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -38,5 +34,5 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest
-         pytest --cov=your_package tests/
+        pytest tests/
+        pytest --cov=pyhrmc tests/

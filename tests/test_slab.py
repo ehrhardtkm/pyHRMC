@@ -1,4 +1,3 @@
-
 import os
 import pytest
 from pyhrmc.core.rmc import RMC
@@ -7,8 +6,6 @@ from pyhrmc.core.rmc import RMC
 # Define the path to the data folder
 DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')
 
-# Define the path to the data folder
-TEST_FOLDER = os.path.join(os.path.dirname(__file__), 'tests')
 
 # Directly specify the two files you want to use
 input_files = {
@@ -21,7 +18,7 @@ input_files = {
 
 
 # Cleanup fixture
-@pytest.fixture
+@pytest.fixture(scope="module")
 def cleanup_output_files():
     yield
     # Code after yield runs after the test  
@@ -29,15 +26,18 @@ def cleanup_output_files():
 
     print("Current working directory:", os.getcwd())
     # After the test, remove all files in the current directory except the test file
-    for file in TEST_FOLDER:
+    for file in os.listdir(os.getcwd()):
         if os.path.isfile(file) and file != test_file:
             try:
                 os.remove(file)
             except Exception as e:
                 print(f"Error removing file {file}: {e}")
 
-
-@pytest.mark.parametrize("hybrid", [True, False], )
+# For now just test RMC function
+@pytest.mark.parametrize("hybrid", [
+    pytest.param(True, marks=pytest.mark.skipif(os.getenv("CI") == "true", reason="Only run this one in CI")),
+    False
+    ])
 def test_hrmc_std(hybrid, capfd, cleanup_output_files):
     rmc = RMC(
         experimental_G_csv=input_files['al2o3_5nm_gr.txt'], 

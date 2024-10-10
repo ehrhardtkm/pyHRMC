@@ -7,7 +7,7 @@ import pyhrmc.transformers as transform_mod
 import pyhrmc.validators as validator_mod
 from pyhrmc.core.slab import RdfSlab
 from pyhrmc.core.interpolator import CrossSection
-from pyhrmc.core.hrmc import Lammps_HRMC
+
 
 import multiprocessing
 from multiprocessing.shared_memory import SharedMemory
@@ -41,6 +41,9 @@ class RMC:
         self.nsteps = 0
         self.success_step = 0
         self.dump_freq = dump_freq
+
+        if self.hybrid == True:
+            from pyhrmc.core.hrmc import Lammps_HRMC
 
         if self.hybrid == True and self.q_temp == None or self.batched_temp == None:
             raise RuntimeError(
