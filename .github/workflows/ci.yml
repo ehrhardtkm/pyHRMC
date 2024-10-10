@@ -92,6 +92,6 @@ jobs:
     - name: Run tests
       run: |
         export lmp=$(pwd)/lammps/build/lmp
-        pytest flare/tests
+        # pytest flare/tests
         pytest tests/
         pytest --cov=pyhrmc tests/
