@@ -17,8 +17,8 @@ Coordination
 "Coordination": {
     "BulkCoordinationRange": {
         "species": {
-            "species1" : [int (min_coordination), int (max_coordination)], 
-            "species2": [int (min_coordination), int (max_coordination)], 
+            "species1" : [int(min_coordination), int(max_coordination)], 
+            "species2": [int(min_coordination), int(max_coordination)], 
             ...
             }
         ...
@@ -47,8 +47,8 @@ DistancesCoordination
     },
     "BulkCoordinationRange": {
         "species": {
-            "species1" : [int (min_coordination), int (max_coordination)], 
-            "species2": [int (min_coordination), int (max_coordination)], 
+            "species1" : [int(min_coordination), int(max_coordination)], 
+            "species2": [int(min_coordination), int(max_coordination)], 
             ...
             }
         ...

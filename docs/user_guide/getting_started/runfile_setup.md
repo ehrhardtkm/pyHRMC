@@ -61,7 +61,14 @@ rmc.run_rmc(
         - **SurfaceDistance**
     - **SiteDistances**
     - **TargetDensity**
-
+- **charges:** this is an optional argument that the user may use to bypass the built-in method of interpolating partial charges for each of the elements in the structure. Additionally, if users desire that no partial charges are used and neutral atoms are assumed, they may set the charge values to 0. If using this argument, follow the following format:
+'''
+charges = {
+    "species1": float(charge),
+    "species2" = float(charge),
+    ...
+    }
+'''
 - **max_steps:** maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. 
 
 ## Example

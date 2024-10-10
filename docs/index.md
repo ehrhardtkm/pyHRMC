@@ -14,7 +14,7 @@ To install pyHRMC and start your first simulation, please see the [Installation]
 
 ## About HRMC
 
-Hybrid Reverse Monte Carlo (HRMC) is a computational method stochastically perturbs atomic coordinates to fit a structure to experimental structural data. Typically, this data is a pair distribution function (PDF) that is collected from x-ray, neutron, or electron sources. In particular, electron scattering is advantageous or nanoscale and ultrathin materials because of the high resolution and high scattering cross-section of electrons. As materials become increasingly nanoscale, the ability to experimentally collect scattering information from disordered materials is useful. However, PDFs provide limited information on the atomistic arrangement of atoms.
+Hybrid Reverse Monte Carlo (HRMC) is a computational method that stochastically perturbs the atomic configuration of a structure to fit its configuration to experimental structural data. Typically, this data is a pair distribution function (PDF) that is collected from x-ray, neutron, or electron sources. In particular, electron scattering is advantageous for nanoscale and ultrathin materials because of the high spatial resolution and larger scattering cross-section of electrons. As materials become increasingly nanoscale, the ability to experimentally collect scattering information from disordered materials is useful. However, PDFs provide limited information on the atomistic arrangement of atoms.
 
 This is where Reverse Monte Carlo (RMC) comes in. In traditional implementations of RMC, the simulation is designed to gradually fit a computed PDF of a cell to an experimental PDF by way of random atomic hops, according to the standard Metropolis Monte Carlo algorithm. While this approach is effective at matching the experimental and computed PDFs, it can fail to produce physically realistic structures. This flaw is due to the stochastic nature of the algorithm, and the limited chemical information that guides the simulation. Often, users specify coordination number and bond angle ranges, minimum bond distances, and more to try to constrain the simulation sufficiently to produce realistic structures. However, these inputs require the user to possess a high degree of understanding about the system that they are trying to model and the accuracy of the simulated structure depends heavily on these parameters. 
 
@@ -38,6 +38,6 @@ We are currently preparing a publication. This section will be updated when the 
 pyHRMC is currently comptability with Python <= 3.11. 
 
 ## License
-pyHRMC is licensed under __. For details, please see [LICENSE](https://github.com/ehrhardtkm/pyHRMC/LICENSE.md).
+pyHRMC is licensed under a 3-clause BSD license. Portions of the code were borrowed from pymatgen, matminer, and Simmate, which are also licensed under MIT and BSD-style licenses. For details, please see [LICENSE](https://github.com/ehrhardtkm/pyHRMC/LICENSE.md).
 
 ## References

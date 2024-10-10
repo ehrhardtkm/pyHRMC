@@ -35,3 +35,15 @@ cd pyHRMC
 ```
 pip install -e .
 ```
+
+## Testing 
+To verify that pyHRMC is correctly installed, you can run the unit tests that are available in the `tests/` directory and implemented with pytest. 
+
+Prior to testing, ensure that you have both LAMMPS and FLARE installed to your machine. Otherwise, the HRMC test will fail. If you do not intend on using the HRMC function and are only interested in testing the RMC function, you can disregard this error and only check to see if the test succeeds when `Hybrid = False`.
+
+From within the `pyhrmc` folder, run the following commands:
+```
+pip install pytest
+cd tests
+pytest
+```

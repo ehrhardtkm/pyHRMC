@@ -3,19 +3,17 @@ import os
 import numpy as np
 from numpy import exp
 from random import random
+import multiprocessing
+import copy
+from itertools import combinations
+import warnings
+
 import pyhrmc.transformers as transform_mod
 import pyhrmc.validators as validator_mod
 from pyhrmc.core.slab import RdfSlab
 from pyhrmc.core.interpolator import CrossSection
 
 
-import multiprocessing
-from multiprocessing.shared_memory import SharedMemory
-import copy
-from itertools import combinations
-import pickle
-import warnings
-from pymatgen.core import Structure
 
 
 class RMC:
@@ -44,6 +42,7 @@ class RMC:
 
         if self.hybrid == True:
             from pyhrmc.core.hrmc import Lammps_HRMC
+            self.Lammps_HRMC = Lammps_HRMC
 
         if self.hybrid == True and self.q_temp == None or self.batched_temp == None:
             raise RuntimeError(
@@ -107,7 +106,7 @@ class RMC:
         max_unc = 0
         if self.hybrid == True:
             # HRMC
-            lammps_run = Lammps_HRMC(lmp_input, task_id)
+            lammps_run = self.Lammps_HRMC(lmp_input, task_id)
             new_energy, max_unc = lammps_run.lammps_energy(
                 structure, self.nsteps, self.success_step, self.dump_freq
             )
@@ -186,26 +185,8 @@ class RMC:
                     keep_new = False
                 return keep_new, new_error
 
-        # neighborlist update with custom approach. then do pdf error check. use __init__ for experimental_G_csv. Then use probability and return true or False
-
-    def update_neighbors(self, shm_name, size, n_idx):
-        # put in the parallelized method, deserialization
-        # attach to existing shared memory
-        shm = SharedMemory(name=shm_name)
-        structure_data = shm.buf[:size].tobytes()
-        structure = pickle.loads(structure_data)
-
-        n_site = structure.sites[n_idx]
-        nns = structure.get_sites_in_sphere(n_site.coords, r=10.0)
-        # remove the site itself because the pymatgen method includes it
-        updated_neighbors = (n_idx, [nn for nn in nns if nn.index != n_idx])
-
-        shm.close()
-
-        return updated_neighbors
-
     def worker_task(self, structure, lmp_input, task_id):
-        lammps_run = Lammps_HRMC(lmp_input, task_id)
+        lammps_run = self.Lammps_HRMC(lmp_input, task_id)
         energy, max_unc = lammps_run.lammps_energy(
             structure, self.nsteps, self.success_step, self.dump_freq
         )
@@ -229,17 +210,22 @@ class RMC:
         experimental_G_csv="al2o3_5nm_gr.txt",
         keV=200,
         prdf_args={"bin_size": 0.04},
-        # for testing, changed error_constant from 5E-7 to 0.002
-        # self.batched_error_constant=0.002,
         transformations: dict = {
-            # "ASECoordinatePerturbation":{}, #simmate version of RattleMutation from ase, rattle_prob auto set to 0.3
             "AtomHop": {},  # consider adding a second, smaller step size "max_step": 0.2
         },
         validators={},
+        charges=None,
+        # if defining charges as user:
+        # charges = {
+        # "species1": charge,
+        # "species2" = charge,
+        # ...
+        # }
+
         lmp_init="in_init.lmp",
         lmp_test="in.lmp",
         lmp_accept="in_accept.lmp",
-        max_steps=100,
+        max_steps=1000000,
     ):
 
         if os.path.exists("error_plotting.txt"):
@@ -332,13 +318,19 @@ class RMC:
         # cache/store interpolated radii
         struct_consts = CrossSection(initial_structure)
 
-        valences = initial_structure.oxidation_state_list()
-        self.apply_oxi_state(valences, initial_structure)
-        charges = struct_consts.partial_charges()
+
+        if charges is not None:
+            for site in initial_structure.sites:
+                # just choose first set of oxi state guesses in the returned tuple
+                site.oxi_state = charges[site.specie.symbol]
+        else:
+            valences = initial_structure.oxidation_state_list()
+            self.apply_oxi_state(valences, initial_structure)
+            charges = struct_consts.partial_charges()
         database_radii = struct_consts.database_ionic_radii()
         interpolated_radii = struct_consts.interpolated_ionic_radii(
             charges, database_radii
-        )
+            )
         setattr(initial_structure, "interpolated_radii", interpolated_radii)
 
         TCS = {}
