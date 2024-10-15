@@ -96,11 +96,12 @@ TargetDensity
 ---
 ```
 "TargetDensity": {        
-    target_density = float,
-    percent_allowance=0.05
+    "target_density": float,
+    "percent_allowance": 0.05,
+    "check_slab": True
 }
 ```
-The structure density is compared to the user-defined target density. If the density does not fall within the percent allowance of the target density (defaults to 5%), the step will automatically be rejected. 
+The structure density is compared to the user-defined target density. If the density does not fall within the percent allowance of the target density (defaults to 5%), the step will automatically be rejected. If using a bulk cell, use `"check_slab": False`, otherwise this will default to True.
 
 
 Example

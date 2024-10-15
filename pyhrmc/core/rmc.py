@@ -7,6 +7,7 @@ import multiprocessing
 import copy
 from itertools import combinations
 import warnings
+import logging
 
 import pyhrmc.transformers as transform_mod
 import pyhrmc.validators as validator_mod
@@ -14,6 +15,7 @@ from pyhrmc.core.slab import RdfSlab
 from pyhrmc.core.interpolator import CrossSection
 
 
+logging.basicConfig(level=logging.INFO)
 
 
 class RMC:
@@ -44,7 +46,7 @@ class RMC:
             from pyhrmc.core.hrmc import Lammps_HRMC
             self.Lammps_HRMC = Lammps_HRMC
 
-        if self.hybrid == True and self.q_temp == None or self.batched_temp == None:
+        if self.hybrid == True and self.q_temp == None and self.batched_temp == None:
             raise RuntimeError(
                 "If running HRMC, please provide values for q_temp and init_temp.\n"
                 "If running RMC, specify that hybrid == False\n"

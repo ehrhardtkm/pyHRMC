@@ -10,11 +10,11 @@ import multiprocessing
 To run a simulation, the user must first create a RMC class object with the required arguments. These arguments determine the quench rate of the error and energy constraints.
 ```
 rmc = RMC(
-    experimental_G_csv=str, 
-    sigma=float, 
-    q_scatter=float, 
-    q_temp=float, 
-    init_temp=float, 
+    experimental_G_csv=str(), 
+    sigma=float(), 
+    q_scatter=float(), 
+    q_temp=float(), 
+    init_temp=float(), 
     dump_freq = 5000
     )
 ```
@@ -32,13 +32,14 @@ The choice of `sigma`, `init_temp`, and their corresponding quenching rates `q_s
 To perform a simulation, use the run_rmc() method and further specify simulation parameters and constraints.
 ```
 rmc.run_rmc(
-    num_processes=int, 
-    initial_structure=str, 
-    keV=int, 
+    num_processes=int(), 
+    initial_structure=str(), 
+    keV=int(), 
     prdf_args={“bin_size:float}, 
     transformations={“AtomHop”:{}}, 
-    validators={args}, 
-    max_steps=int
+    validators=dict(),
+    charges=dict(),
+    max_steps=int()
     )
 ```
 - **num_processes:** the number of processes to use in the simulation. If a serial simulation is desired, set to 1. If greater than 1, pyHRMC performs the simulation in iterations. In each iteration, a number of Monte Carlo steps equal to `num_processes` will be independently generated and validated in parallel. Accepted individual steps will then be merged and re-tested in a single structure, which constitutes one iteration. Therefore, the total number of steps will always be equal to `num_processes` x the number of completed iterations. This distinction is particularly important when selecting `q_scatter` and `q_temp` and interpreting output files.

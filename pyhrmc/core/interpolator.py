@@ -8,11 +8,12 @@ from scipy import integrate
 from sklearn.linear_model import LinearRegression
 import warnings
 from pymatgen.core.periodic_table import Species
-
+import logging
 
 class CrossSection(RdfSlab):
     def __init__(self, struct):
         self.struct = struct
+        logger = logging.getLogger(__name__)
 
         # parameters for atoms from L. M. Peng, Micron, (1999), 30, 625–648, https://doi.org/10.1016/S0968-4328(99)00033-5
         self.atom_dict = {
@@ -2466,39 +2467,47 @@ class CrossSection(RdfSlab):
         a_terms_neutral, b_terms_neutral = self.select_terms(el, OS=0)
         TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, g, l)
 
-        # select df rows of ions of same Z and different e- count
-        selected_rows = self.ion_df[self.ion_df["species"] == el]
-        # reset to start index from 0 in this subset
-        selected_rows = selected_rows.reset_index(drop=True)
+        try:
+            # select df rows of ions of same Z and different e- count
+            selected_rows = self.ion_df[self.ion_df["species"] == el]
+            # reset to start index from 0 in this subset
+            selected_rows = selected_rows.reset_index(drop=True)
 
-        Z = selected_rows.iat[0, 1]
-        # make list of relative e- change, initialize with 1 because there is always the atomic info (e- count/Z = 1 for atom)
-        rel_e_changes = [1]
-        # make list of the TCS that corresponds to xs list
-        # linearize by taking natural log
-        TCSs = [TCS1]
-        ln_TCSs = [math.log(TCS1)]
+            Z = selected_rows.iat[0, 1]
+            # make list of relative e- change, initialize with 1 because there is always the atomic info (e- count/Z = 1 for atom)
+            rel_e_changes = [1]
+            # make list of the TCS that corresponds to xs list
+            # linearize by taking natural log
+            TCSs = [TCS1]
+            ln_TCSs = [math.log(TCS1)]
 
-        # append the available OS from the ion_dict column 1 and all rows
-        for i in range(selected_rows.shape[0]):
-            oxi_state = selected_rows.iat[i, 2]
-            e_count = Z - oxi_state
-            rel_e_changes.append(e_count / Z)
-            a_terms_ion, b_terms_ion = self.select_terms(el, OS=oxi_state)
-            TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l)
-            TCSs.append(TCS_ion)
-            ln_TCSs.append(math.log(TCS_ion))
+            # append the available OS from the ion_dict column 1 and all rows
+            for i in range(selected_rows.shape[0]):
+                oxi_state = selected_rows.iat[i, 2]
+                e_count = Z - oxi_state
+                rel_e_changes.append(e_count / Z)
+                a_terms_ion, b_terms_ion = self.select_terms(el, OS=oxi_state)
+                TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l)
+                TCSs.append(TCS_ion)
+                ln_TCSs.append(math.log(TCS_ion))
 
-        x = np.array(rel_e_changes).reshape((-1, 1))
-        y = np.array(ln_TCSs)
+            x = np.array(rel_e_changes).reshape((-1, 1))
+            y = np.array(ln_TCSs)
 
-        # apply linear regression model
-        reg = LinearRegression().fit(x, y)
-        m = reg.coef_
-        b = reg.intercept_
-        rel_e_ion = (Z - partial_charge) / Z
-        interpolated_ln_TCS = m * rel_e_ion + b
-        interpolated_TCS = math.exp(interpolated_ln_TCS)
+            # apply linear regression model
+            reg = LinearRegression().fit(x, y)
+            m = reg.coef_
+            b = reg.intercept_
+            rel_e_ion = (Z - partial_charge) / Z
+            interpolated_ln_TCS = m * rel_e_ion + b
+            interpolated_TCS = math.exp(interpolated_ln_TCS)
+        
+        except:
+            logging.warning(
+                f"No tabulated data for ionic cross-sections of {el} are available. " 
+                "Applying cross section of neutral atom."
+            )
+            interpolated_TCS = TCS1
 
         return interpolated_TCS
 
