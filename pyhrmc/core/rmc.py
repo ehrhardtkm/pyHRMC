@@ -223,6 +223,7 @@ class RMC:
         # "species2" = charge,
         # ...
         # }
+        pdf_cutoff=1.6,
 
         lmp_init="in_init.lmp",
         lmp_test="in.lmp",
@@ -374,6 +375,7 @@ class RMC:
         el_switch, el_list = self.store_symbol(current_structure)
         current_structure.el_switch = el_switch
         current_structure.el_list = el_list
+        current_structure.pdf_cutoff = pdf_cutoff
         current_structure_neighborlist = initial_structure_neighborlist
         self.current_error, slope = current_structure.prdf_error(
             current_structure_neighborlist

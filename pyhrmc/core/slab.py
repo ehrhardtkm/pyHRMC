@@ -264,9 +264,9 @@ class RdfSlab(Structure):
         zoom_factor = target_size / current_size
         calc_scaled = zoom(calc, zoom_factor)
 
-        # we will zero the PDF at distances less than 1.1 A.
+        # we will zero the PDF at distances less than the user-specified cutoff, in Angstroms.
 
-        zero_distance = 1.6
+        zero_distance = self.pdf_cutoff
         PDF_maximum_radial_distance = 10
 
         zero_until = int(zero_distance / PDF_maximum_radial_distance * target_size)
@@ -295,7 +295,7 @@ class RdfSlab(Structure):
         zoom_factor = target_size / current_size
         calc_scaled = zoom(calc, zoom_factor) * slope
 
-        zero_distance = 1.6
+        zero_distance = self.pdf_cutoff
         PDF_maximum_radial_distance = 10
         zero_until = int(zero_distance / PDF_maximum_radial_distance * target_size)
         zero_array = np.zeros(zero_until)
@@ -337,7 +337,7 @@ class RdfSlab(Structure):
         zoom_factor = target_size / current_size
         calc_scaled = zoom(calc, zoom_factor) * slope
 
-        zero_distance = 1.6
+        zero_distance = self.pdf_cutoff
         PDF_maximum_radial_distance = 10
         zero_until = int(zero_distance / PDF_maximum_radial_distance * target_size)
         zero_array = np.zeros(zero_until)

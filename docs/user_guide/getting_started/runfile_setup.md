@@ -39,6 +39,7 @@ rmc.run_rmc(
     transformations={“AtomHop”:{}}, 
     validators=dict(),
     charges=dict(),
+    pdf_cutoff=float(),
     max_steps=int()
     )
 ```
@@ -70,6 +71,7 @@ charges = {
     ...
     }
 '''
+- **pdf_cutoff:** this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.
 - **max_steps:** maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. 
 
 ## Example

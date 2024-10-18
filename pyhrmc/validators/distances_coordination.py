@@ -622,9 +622,12 @@ class DistancesCoordination(Validator):
 
             # run pymatgen-modified coordination number function on neighbor atoms
             for neighbor in neighbor_list:
-                element_list, el, neighbor_list = self.get_coordination(
-                    [neighbor], voro, sliced_df, points, struct
-                )
+                try:
+                    element_list, el, neighbor_list = self.get_coordination(
+                        [neighbor], voro, sliced_df, points, struct
+                    )
+                except:
+                    return False  # when distances are too short
 
                 # check if the atom is near a surface
                 if self.surface_coordination is not None:
