@@ -127,6 +127,10 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#installation" class="nav-link">Installation</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#testing" class="nav-link">Testing</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -160,6 +164,14 @@ cd pyHRMC
 <li>Install the package in development mode with pip.</li>
 </ol>
 <pre><code>pip install -e .
+</code></pre>
+<h2 id="testing">Testing</h2>
+<p>To verify that pyHRMC is correctly installed, you can run the unit tests that are available in the <code>tests/</code> directory and implemented with pytest. </p>
+<p>Prior to testing, ensure that you have both LAMMPS and FLARE installed to your machine. Otherwise, the HRMC test will fail. If you do not intend on using the HRMC function and are only interested in testing the RMC function, you can disregard this error and only check to see if the test succeeds when <code>Hybrid = False</code>.</p>
+<p>From within the <code>pyhrmc</code> folder, run the following commands:</p>
+<pre><code>pip install pytest
+cd tests
+pytest
 </code></pre></div>
             </div>
         </div>

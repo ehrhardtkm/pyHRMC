@@ -169,8 +169,8 @@
 <pre><code>&quot;Coordination&quot;: {
     &quot;BulkCoordinationRange&quot;: {
         &quot;species&quot;: {
-            &quot;species1&quot; : [int (min_coordination), int (max_coordination)], 
-            &quot;species2&quot;: [int (min_coordination), int (max_coordination)], 
+            &quot;species1&quot; : [int(min_coordination), int(max_coordination)], 
+            &quot;species2&quot;: [int(min_coordination), int(max_coordination)], 
             ...
             }
         ...
@@ -194,8 +194,8 @@
     },
     &quot;BulkCoordinationRange&quot;: {
         &quot;species&quot;: {
-            &quot;species1&quot; : [int (min_coordination), int (max_coordination)], 
-            &quot;species2&quot;: [int (min_coordination), int (max_coordination)], 
+            &quot;species1&quot; : [int(min_coordination), int(max_coordination)], 
+            &quot;species2&quot;: [int(min_coordination), int(max_coordination)], 
             ...
             }
         ...
@@ -232,11 +232,12 @@
 <p>The <code>SiteDistance</code> constraint will uses the <a href="https://pymatgen.org/pymatgen.core.html">distance_matrix</a> property from pymatgen to check all interatomic distances in the system against a single, universal minimum distance cutoff. If any interatomic distances are found to be less than the user-specified cutoff, the program will automatically reject the step.</p>
 <h2 id="targetdensity">TargetDensity</h2>
 <pre><code>&quot;TargetDensity&quot;: {        
-    target_density = float,
-    percent_allowance=0.05
+    &quot;target_density&quot;: float,
+    &quot;percent_allowance&quot;: 0.05,
+    &quot;check_slab&quot;: True
 }
 </code></pre>
-<p>The structure density is compared to the user-defined target density. If the density does not fall within the percent allowance of the target density (defaults to 5%), the step will automatically be rejected. </p>
+<p>The structure density is compared to the user-defined target density. If the density does not fall within the percent allowance of the target density (defaults to 5%), the step will automatically be rejected. If using a bulk cell, use <code>"check_slab": False</code>, otherwise this will default to True.</p>
 <h2 id="example">Example</h2>
 <p>An example of a <code>run_rmc</code> call with the <code>SlabThickness</code> and 'Coordination` validators in included in the documentation for <a href="https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/runfile_setup/">runfile setup</a>.</p></div>
             </div>

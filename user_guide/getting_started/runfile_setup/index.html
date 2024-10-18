@@ -154,11 +154,11 @@ import multiprocessing
 <h2 id="creating-rmc-object">Creating RMC object</h2>
 <p>To run a simulation, the user must first create a RMC class object with the required arguments. These arguments determine the quench rate of the error and energy constraints.</p>
 <pre><code>rmc = RMC(
-    experimental_G_csv=str, 
-    sigma=float, 
-    q_scatter=float, 
-    q_temp=float, 
-    init_temp=float, 
+    experimental_G_csv=str(), 
+    sigma=float(), 
+    q_scatter=float(), 
+    q_temp=float(), 
+    init_temp=float(), 
     dump_freq = 5000
     )
 </code></pre>
@@ -174,13 +174,15 @@ import multiprocessing
 <h2 id="calling-the-run_rmc-method">Calling the run_rmc() method</h2>
 <p>To perform a simulation, use the run_rmc() method and further specify simulation parameters and constraints.</p>
 <pre><code>rmc.run_rmc(
-    num_processes=int, 
-    initial_structure=str, 
-    keV=int, 
+    num_processes=int(), 
+    initial_structure=str(), 
+    keV=int(), 
     prdf_args={“bin_size:float}, 
     transformations={“AtomHop”:{}}, 
-    validators={args}, 
-    max_steps=int
+    validators=dict(),
+    charges=dict(),
+    pdf_cutoff=float(),
+    max_steps=int()
     )
 </code></pre>
 <ul>
@@ -195,9 +197,7 @@ import multiprocessing
 <li><strong>AtomHop:</strong> currently the only kind of transformation available in pyHRMC. This transformation creates a spherical grid of radius 1 Angstrom around an atom and selects a cell within the grid randomly. The coordinates of the selected cell are treated as the new coordinates of the atom. This transformer only moves one atom at a time, but this action can be parallelized for major speedups and yield structures with multiple moved atoms in a single step.</li>
 </ul>
 </li>
-<li>
-<p><strong>validators:</strong> details on available validators can be found on the <a href="http://127.0.0.1:8000/user_guide/validator_selection/">validator selection</a> page.</p>
-<ul>
+<li><strong>validators:</strong> details on available validators can be found on the <a href="http://127.0.0.1:8000/user_guide/validator_selection/">validator selection</a> page.<ul>
 <li><strong>SlabThickness</strong></li>
 <li><strong>Coordination</strong> <ul>
 <li><strong>BulkCoordinationRange</strong></li>
@@ -216,14 +216,20 @@ import multiprocessing
 <li><strong>TargetDensity</strong></li>
 </ul>
 </li>
-<li>
-<p><strong>max_steps:</strong> maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </p>
-</li>
+<li><strong>charges:</strong> this is an optional argument that the user may use to bypass the built-in method of interpolating partial charges for each of the elements in the structure. Additionally, if users desire that no partial charges are used and neutral atoms are assumed, they may set the charge values to 0. If using this argument, follow the following format:
+'''
+charges = {
+    "species1": float(charge),
+    "species2" = float(charge),
+    ...
+    }
+'''</li>
+<li><strong>pdf_cutoff:</strong> this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.</li>
+<li><strong>max_steps:</strong> maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </li>
 </ul>
 <h2 id="example">Example</h2>
 <p>An example runfile.py for a simulation of amorphous alumina is shown below:</p>
-<pre><code>from pyHRMC.core.rmc import RMC
-import multiprocessing
+<pre><code>from pyhrmc.core.rmc import RMC
 
 if __name__ == &quot;__main__&quot;:
 
@@ -234,7 +240,7 @@ if __name__ == &quot;__main__&quot;:
         keV=200,
         prdf_args={&quot;bin_size&quot;: 0.04},
         transformations={
-            &quot;AtomHop&quot;: {}, # consider adding a second, smaller step size &quot;max_step&quot;: 0.2
+            &quot;AtomHop&quot;: {}
         },
 
         validators={

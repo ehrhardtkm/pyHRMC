@@ -179,7 +179,8 @@
 </code></pre>
 <h2 id="initial_structurevasp">initial_structure.vasp</h2>
 <p>A structure file must be prepared in the POSCAR/VASP format for the HRMC simulation to use at a starting configuration of atoms. For a slab simulation, sufficient vacuum space must be inserted above and below the slab to simulate these surfaces. </p>
-<p>The initial structure file must include the correct number of atoms and stoichiometry that are to be simulated, since HRMC does not affect the composition of the simulated cell. Additionally, if performing a bulk simulation, the cell must also be configured with the correct density. In slab simulations, density may decrease to a minor degree, but the slab will not expand to fill the vacuum space in the z direction.</p></div>
+<p>The initial structure file must include the correct number of atoms and stoichiometry that are to be simulated, since HRMC does not affect the composition of the simulated cell. Additionally, if performing a bulk simulation, the cell must also be configured with the correct density. In slab simulations, density may decrease to a minor degree, but the slab will not expand to fill the vacuum space in the z direction.</p>
+<p>Currently, cells must be orthogonal to the z axis to run correctly.</p></div>
             </div>
         </div>
 
