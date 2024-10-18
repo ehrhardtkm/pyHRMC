@@ -77,8 +77,7 @@ charges = {
 ## Example
 An example runfile.py for a simulation of amorphous alumina is shown below:
 ```
-from pyHRMC.core.rmc import RMC
-import multiprocessing
+from pyhrmc.core.rmc import RMC
 
 if __name__ == "__main__":
 
@@ -89,7 +88,7 @@ if __name__ == "__main__":
         keV=200,
         prdf_args={"bin_size": 0.04},
         transformations={
-            "AtomHop": {}, # consider adding a second, smaller step size "max_step": 0.2
+            "AtomHop": {}
         },
 
         validators={
