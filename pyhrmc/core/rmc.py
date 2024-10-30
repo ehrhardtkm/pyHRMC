@@ -126,10 +126,6 @@ class RMC:
             if self.hybrid == True:
                 if new_energy <= self.current_energy:
                     # accept new structure
-                    with open("acceptance_probabilities.txt", "a") as out:
-                        out.write(
-                            f"{version}: {keep_new}, n/a, {new_error}, {new_energy}\n"
-                        )
                     pass
                 elif new_energy > self.current_energy:
                     # HRMC, with energy term
@@ -145,16 +141,10 @@ class RMC:
                     else:
                         keep_new = False
                     # logging probability info for record keeping
-                    with open("acceptance_probabilities.txt", "a") as out:
-                        out.write(
-                            f"{version}: {keep_new}, {h_prob}, {new_error}, {new_energy}\n"
-                        )
                 return keep_new, new_error, max_unc
             # RMC
             elif self.hybrid == False:
                 # accept new structure
-                with open("acceptance_probabilities.txt", "a") as out:
-                    out.write(f"{version}: {keep_new}, n/a, {new_error}\n")
                 return keep_new, new_error
 
         else:
@@ -172,10 +162,6 @@ class RMC:
                 else:
                     keep_new = False
                 # logging probability info for record keeping
-                with open("acceptance_probabilities.txt", "a") as out:
-                    out.write(
-                        f"{version}: {keep_new}, {h_prob}, {new_error}, {new_energy}\n"
-                    )
                 return keep_new, new_error, max_unc
             elif self.hybrid == False:
                 probability = exp(
@@ -271,12 +257,9 @@ class RMC:
                 "If this is undesired, please remove the existing file and restart the simulation."
             )
 
-            if not os.path.exists("errors.txt"):
-                warnings.warn("errors.txt is missing.")
             if os.path.exists("XDATCAR"):
                 warnings.warn("XDATCAR is missing.")
-            if os.path.exists("acceptance_probabilities.txt"):
-                warnings.warn("acceptance_probabilities is missing.")
+
 
         """
         STAGING
@@ -513,10 +496,6 @@ class RMC:
                     print(
                         f"Step {self.nsteps}. Accepted, sum of residuals = {new_error}.  Energy = {new_energy/num_atoms} per atom"
                     )
-                    with open("errors.txt", "a") as out:
-                        out.write(
-                            f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n"
-                        )
                     with open("error_plotting.txt", "a") as out:
                         out.write(
                             f"{self.nsteps} {new_error} {new_energy/num_atoms} {self.batched_error_constant} {self.batched_temp} {max_unc}\n"
@@ -525,10 +504,6 @@ class RMC:
                     print(
                         f"Step {self.nsteps}. Accepted, sum of residuals = {new_error}."
                     )
-                    with open("errors.txt", "a") as out:
-                        out.write(
-                            f"step # = {self.nsteps}, error = {new_error}, moved = {len(moved_atoms)}, tot_moves = {moves}, moves attempted = {moves_attempted}, error_const = {self.batched_error_constant}\n"
-                        )
                     with open("error_plotting.txt", "a") as out:
                         out.write(
                             f"{self.nsteps} {new_error} {self.batched_error_constant}\n"
@@ -539,8 +514,9 @@ class RMC:
                     r=10.0
                 )
                 current_structure.to(fmt="POSCAR", filename="output.vasp")
-                frame_num = len(error_list)
-                current_structure.write_xdatcar(frame_num)
+                if self.success_step % 10 == 0:
+                    frame_num = len(error_list)
+                    current_structure.write_xdatcar(frame_num)
 
                 counter.append(self.nsteps)
 
@@ -554,8 +530,6 @@ class RMC:
                     self.batched_error_constant
                     * self.q_scatter ** (((self.nsteps * num_processes) / 1000000) / 2)
                 )
-                # use this line to change the number in a batch. need rounding to return an integer value
-                # num_batch = round(num_batch * batch_decay)
 
         output_structure = current_structure
         output_structure.to(fmt="POSCAR", filename="output.vasp")
