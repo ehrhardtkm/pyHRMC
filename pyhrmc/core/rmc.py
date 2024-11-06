@@ -28,7 +28,7 @@ class RMC:
         q_temp=None,
         init_temp=None,
         hybrid=True,
-        dump_freq=5000,
+        dump_freq=5000
     ):
         self.hybrid = hybrid
         self.experimental_G_csv = experimental_G_csv

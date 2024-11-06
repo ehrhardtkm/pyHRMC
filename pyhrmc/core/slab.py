@@ -181,8 +181,9 @@ class RdfSlab(Structure):
         # OPTIMIZE: consider caching the creation/fitting of this class because
         # it never changes. (i.e move it to a separate method and use @cached_property)
 
+        cutoff = 10
         prdf_maker = PartialRadialDistributionFunction(
-            cutoff=10, bin_size=0.04, el_switch=self.el_switch, el_list=self.el_list
+            cutoff=cutoff, bin_size=0.04, el_switch=self.el_switch, el_list=self.el_list
         )
         prdf_maker.fit([self])
 
@@ -197,7 +198,7 @@ class RdfSlab(Structure):
         # this part is optional / needs tweaking to optimize
 
         for pair, rdf in prdf_dict.items():
-            rdf_normalized = rdf * self.slab_volume / self.composition[pair[1]]
+            rdf_normalized = rdf * self.volume / self.composition[pair[1]]
             rdf_smoothed = gaussian_filter1d(rdf_normalized, sigma=1)
             prdf_dict[pair] = rdf_smoothed
 
@@ -217,6 +218,22 @@ class RdfSlab(Structure):
             g += rdf * weight
 
         return g
+    
+    def define_u(self):
+        bin_size= 0.04
+        if self.thickness_z['thickness']:
+            thickness = self.thickness_z['thickness']
+
+        r_values = np.arange(0, 10, bin_size)
+
+        u_values = np.where(
+            r_values < thickness,
+            r_values / (2 * thickness),
+            1 - (thickness / (2 * r_values))
+        )
+
+        return u_values
+
 
     def full_pdf_G(self, neighborlist):
 
@@ -226,8 +243,13 @@ class RdfSlab(Structure):
         r = np.arange(0, 10, 0.04)
 
         g = self.full_pdf_g(neighborlist)
-        rho = self.num_sites / self.volume  # CHANGE TO SLAB VOL WHEN NEEDED
-        G = 4 * np.pi * rho * r * (g - 1)
+        rho = self.num_sites / self.slab_volume  
+        rho_rmc = self.num_sites / self.volume
+        rho_correction = rho_rmc / rho
+        u = self.define_u()
+        
+        #G = 4 * np.pi * rho * r * (g - 1)
+        G = 4 * np.pi  * rho * r * (rho_correction * g + u - 1)
 
         return G
 
@@ -312,6 +334,7 @@ class RdfSlab(Structure):
 
         with open("pdf.txt", "w") as file:
             file.write(f"{' '.join(map(str, r))} \n{' '.join(map(str, calc_scaled))}\n")
+
 
         return
 
