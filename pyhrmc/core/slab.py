@@ -199,7 +199,7 @@ class RdfSlab(Structure):
 
         for pair, rdf in prdf_dict.items():
             rdf_normalized = rdf * self.volume / self.composition[pair[1]]
-            rdf_smoothed = gaussian_filter1d(rdf_normalized, sigma=1)
+            rdf_smoothed = gaussian_filter1d(rdf_normalized, sigma= self.gaussian_blur)
             prdf_dict[pair] = rdf_smoothed
 
         return prdf_dict
@@ -248,7 +248,6 @@ class RdfSlab(Structure):
         rho_correction = rho_rmc / rho
         u = self.define_u()
         
-        #G = 4 * np.pi * rho * r * (g - 1)
         G = 4 * np.pi  * rho * r * (rho_correction * g + u - 1)
 
         return G

@@ -69,11 +69,11 @@ When checking the MinDistances, the program will recognize the pairwise combinat
         ("O", "O"): 1.8
     },
     "BulkCoordinationRange": {
-        "Al": {"Al" : [0, 2], "O": [2, 7]}, 
+        "Al": {"Al" : [0, 1], "O": [2, 7]}, 
         "O": {"Al": [1, 4], "O": [0, 1]} 
         },
     "SurfaceCoordinationRange": {
-        "Al": {"Al": [0, 2], "O": [1, 7]},
+        "Al": {"Al": [0, 0], "O": [3, 7]},
         "O": {"Al": [1, 4], "O": [0, 1]} 
         },
     "SurfaceDistance": 3

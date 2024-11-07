@@ -210,7 +210,7 @@ class RMC:
         # ...
         # }
         pdf_cutoff=1.6,
-
+        gaussian_blur = 1,
         lmp_init="in_init.lmp",
         lmp_test="in.lmp",
         lmp_accept="in_accept.lmp",
@@ -359,6 +359,7 @@ class RMC:
         current_structure.el_switch = el_switch
         current_structure.el_list = el_list
         current_structure.pdf_cutoff = pdf_cutoff
+        current_structure.gaussian_blur = gaussian_blur
         current_structure_neighborlist = initial_structure_neighborlist
         self.current_error, slope = current_structure.prdf_error(
             current_structure_neighborlist
