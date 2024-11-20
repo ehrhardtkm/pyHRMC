@@ -3,7 +3,6 @@
 # This code is adapted from pymatgen.analysis.local_env.py
 # pymatgen is licensed under a MIT license, which can be found in LICENSE.md
 
-
 from pyhrmc.validators import Validator
 import numpy as np
 import pandas as pd
@@ -19,7 +18,10 @@ NNData = namedtuple("NNData", ["all_nninfo", "cn_weights", "cn_nninfo"])
 
 class Coordination(Validator):
     def __init__(
-        self, BulkCoordinationRange, SurfaceCoordinationRange=None, SurfaceDistance=None
+        self, 
+        BulkCoordinationRange, 
+        SurfaceCoordinationRange=None, 
+        SurfaceDistance=None
     ):
         self.coordination = BulkCoordinationRange
         self.surface_coordination = SurfaceCoordinationRange
@@ -90,18 +92,13 @@ class Coordination(Validator):
             if site_idx in nn:
                 other_site = nn[0] if nn[1] == site_idx else nn[1]
 
-                # if -1 in vind:
-                #     # -1 indices correspond to the Voronoi cell
-                #     #  missing a face
-                #     raise RuntimeError("This structure is pathological, infinite vertex in the Voronoi construction")
-
                 # Get the solid angle of the face
-
                 facets = [all_vertices[i] for i in vind]
                 angle = self.solid_angle(center_coords, facets)
 
                 # Compute the volume of associated with this face
                 volume = 0
+                # Notes from original code:
                 # qvoronoi returns vertices in CCW order, so I can akak
                 # the face up in to segments (0,1,2), (0,2,3), ... to compute
                 # its area where each number is a vertex size
@@ -168,10 +165,6 @@ class Coordination(Validator):
                 "site_index": nstats["index"],
             }
 
-            # Add all the information about the site
-            poly_info = nstats
-            del poly_info["site"]
-            nn_info["poly_info"] = poly_info
             siw.append(nn_info)
         return siw
 
@@ -249,6 +242,12 @@ class Coordination(Validator):
 
         x1 = dist_bins[idx]
         x2 = dist_bins[idx + 1]
+        if x1 > 1:
+            diff = x1 - 1
+            x1 = x1 - diff
+            x2 = x2 - diff
+            if x2 < 0.0:
+                x2 = 0.0
 
         if dist_bins[idx] == 1:
             area1 = 0.25 * math.pi * r**2
@@ -276,6 +275,7 @@ class Coordination(Validator):
             # this corresponds to absolute row position in the points array
             true_move_index = sliced_df.index.get_loc(move_index)
             center_element = sliced_df.at[move_index, "el"]
+            center_points = np.array(points[true_move_index], dtype=np.float64)
 
             nns = self.get_site_statistics(voro, true_move_index, struct, sliced_df)
             nn_info = self._extract_nn_info(struct, nns)
@@ -295,11 +295,12 @@ class Coordination(Validator):
 
             distance_cutoffs = (0.5, 1)
 
+            bottom_surf = struct.thickness_z["min_z"] + self.surface_distance
+            top_surf = struct.thickness_z["max_z"] - self.surface_distance
+            
             # adjust solid angle weights based on distance
-
             # get radius for the moved atom, which is always [0] in move_indices
             r1 = self._get_radius(struct, move_indices[0])
-            # r1 = self._get_radius(struct[move_index])
             for entry in nn:
                 r2 = self._get_radius(struct, entry["true_site_index"])
                 if r1 > 0 and r2 > 0:
@@ -313,7 +314,7 @@ class Coordination(Validator):
                     d = self._get_default_radius(
                         struct[move_indices[0]]
                     ) + self._get_default_radius(entry["site"])
-
+                entry_coords = np.array(points[entry["site_index"]], dtype=np.float64)  
                 dist = np.linalg.norm(points[true_move_index] - entry["site"].coords)
                 dist_weight: float = 0
 
@@ -330,6 +331,15 @@ class Coordination(Validator):
                         + 1
                     ) * 0.5
                 entry["weight"] = entry["weight"] * dist_weight
+                try:
+                    if center_points[2] < bottom_surf or center_points[2] > top_surf:
+                        # corrective factor to account for the fact that weight is max 0.5
+                        # if the center atom is at the surface
+                        # this correction is "conservative" since atom may not
+                        # be strictly at the surface
+                        entry["weight"] = entry["weight"] * 1.2       
+                except:
+                    pass    
 
             # sort nearest neighbors from highest to lowest weight
             nn = sorted(nn, key=lambda x: x["weight"], reverse=True)
@@ -338,13 +348,11 @@ class Coordination(Validator):
             length = 15
             nndata = ""
             if nn[0]["weight"] == 0:
-                # self.transform_to_length(self.NNData([], {0: 1.0}, {0: []}), length)
                 nn = [x for x in nn if x["weight"] > 0]
 
             else:
                 for entry in nn:
                     entry["weight"] = round(entry["weight"], 3)
-                    del entry["poly_info"]  # trim
 
                 # remove entries with no weight
                 nn = [x for x in nn if x["weight"] > 0]
@@ -396,8 +404,6 @@ class Coordination(Validator):
         move_indices = struct.move_indices
 
         d = struct.xyz_df
-
-        # BUG: change this to be a variable instead of hardcoding
         slice_distance = 5.23  # in Angstroms, should equal two coordination spheres
 
         for move_index in move_indices:
@@ -424,117 +430,106 @@ class Coordination(Validator):
                 (lower_z < d["df_z"]["z"]) & (d["df_z"]["z"] < upper_z)
             ]
 
-            # if the slice extends beyond the simulation cell, wrap the slice around
-            # the simulation box
+            # if the slice extends beyond the simulation cell:
+            """ wrap the slice around the simulation box """
             if lower_x < 0:
+                low_df_x = d["df_x"].loc[d["df_x"]["x"] > struct.lattice.a + lower_x].copy()
+                low_df_x["x"] = low_df_x["x"] - struct.lattice.a
                 sliced_df_x = pd.concat(
-                    [
-                        sliced_df_x,
-                        d["df_x"].loc[struct.lattice.a + lower_x < d["df_x"]["x"]],
-                    ]
-                )
+                    [sliced_df_x, low_df_x]
+                    )
+            else:
+                low_df_x = None
             if lower_y < 0:
+                low_df_y = d["df_y"].loc[d["df_y"]["y"] > struct.lattice.b + lower_y].copy()
+                low_df_y["y"] = low_df_y["y"] - struct.lattice.b
                 sliced_df_y = pd.concat(
-                    [
-                        sliced_df_y,
-                        d["df_y"].loc[struct.lattice.b + lower_y < d["df_y"]["y"]],
-                    ]
-                )
+                    [sliced_df_y, low_df_y]
+                    )
+            else:
+                low_df_y = None
             if lower_z < 0:
+                low_df_z = d["df_z"].loc[d["df_z"]["z"] > struct.lattice.c + lower_z].copy()
+                low_df_z["z"] = low_df_z["z"] - struct.lattice.c
                 sliced_df_z = pd.concat(
-                    [
-                        sliced_df_z,
-                        d["df_z"].loc[struct.lattice.c + lower_z < d["df_z"]["z"]],
-                    ]
-                )
+                    [sliced_df_z, low_df_z]
+                    )
+            else:
+                low_df_z = None
             if upper_x > struct.lattice.a:
+                upper_df_x = d["df_x"].loc[d["df_x"]["x"] < upper_x - struct.lattice.a].copy()
+                upper_df_x["x"] = upper_df_x["x"] + struct.lattice.a
                 sliced_df_x = pd.concat(
-                    [
-                        sliced_df_x,
-                        d["df_x"].loc[upper_x - struct.lattice.a > d["df_x"]["x"]],
-                    ]
-                )
+                    [sliced_df_x, upper_df_x]
+                    )
+            else:
+                upper_df_x = None
             if upper_y > struct.lattice.b:
+                upper_df_y = d["df_y"].loc[d["df_y"]["y"] < upper_y - struct.lattice.b].copy()
+                upper_df_y["y"] = upper_df_y["y"] + struct.lattice.b
                 sliced_df_y = pd.concat(
-                    [
-                        sliced_df_y,
-                        d["df_y"].loc[upper_y - struct.lattice.b > d["df_y"]["y"]],
-                    ]
-                )
+                    [sliced_df_y, upper_df_y]
+                    )
+            else:
+                upper_df_y = None
             if upper_z > struct.lattice.c:
+                upper_df_z = d["df_z"].loc[d["df_z"]["z"] < upper_z - struct.lattice.c].copy()
+                upper_df_z["z"] = upper_df_z["z"] + struct.lattice.c
                 sliced_df_z = pd.concat(
-                    [
-                        sliced_df_z,
-                        d["df_z"].loc[upper_z - struct.lattice.c > d["df_z"]["z"]],
-                    ]
-                )
+                    [sliced_df_z, upper_df_z]
+                    )
+            else:
+                upper_df_z = None
 
-            # get common items in sliced dataframes
+            # Get common items in sliced dataframes
+            common_indices = sliced_df_x.index.intersection(sliced_df_y.index).intersection(sliced_df_z.index)
+
             sliced_df = sliced_df_x[
                 sliced_df_x.isin(sliced_df_y.to_dict("list"))
                 & sliced_df_x.isin(sliced_df_z.to_dict("list"))
             ].dropna()
 
-            # sliced_df = sliced_df_x.copy()
-            # for i in sliced_df_x.index:
-            #     if i not in sliced_df_y.index or i not in sliced_df_z.index:
-            #         sliced_df.drop(i, inplace=True)
+            # List of dfs to check
+            image_dfs = [low_df_x, low_df_y, low_df_z, upper_df_x, upper_df_y, upper_df_z]
+            common_image_indices = []
+            for df in image_dfs:
+                if df is not None:
+                    common_image_indices.extend(common_indices.intersection(df.index)) 
 
-            # If wrapping is necessary, add voro points that correspond to the other side of the structure cell
-            lattice = struct.lattice.abc
-            move_coord = struct.sites[move_index].coords
-            dict_list = []
+            filtered_df = pd.DataFrame(index=common_image_indices, columns=['x', 'y', 'z', 'el'])
+            for idx in common_image_indices:
+                for col in ['x', 'y', 'z']:
+                    # Get the values for this index and column from each DataFrame
+                    values = {
+                        'sliced_df_x': sliced_df_x.at[idx, col],
+                        'sliced_df_y': sliced_df_y.at[idx, col],
+                        'sliced_df_z': sliced_df_z.at[idx, col]
+                    }
+                    
+                    value_counts = pd.Series(values).value_counts()
+                    # Select the value that is different
+                    if len(value_counts) > 1:  
+                        differing_value = value_counts.idxmin() 
+                    else:
+                        # If all values are the same, just choose one
+                        differing_value = values['sliced_df_x']
+                    
+                    # Assign the differing value to the result df
+                    filtered_df.at[idx, col] = differing_value
+                    filtered_df.at[idx, 'el'] = sliced_df_x.at[idx, 'el']
 
-            for axis in range(len(lattice)):
-                images = [move_coord[0], move_coord[1], move_coord[2]]
-                half = lattice[axis] / 2
-
-                # in the bottom half, making an image in the top half
-                if move_coord[axis] < half:
-                    image_coord = lattice[axis] + move_coord[axis]
-                    if image_coord < (lattice[axis] + 1.5):
-                        images[axis] = image_coord
-                        image_dict = {
-                            "x": images[0],
-                            "y": images[1],
-                            "z": images[2],
-                            "el": struct.sites[move_index].species_string,
-                        }
-                        dict_list.append(image_dict)
-
-                # in the top half, making an image in the bottom half
-                else:
-                    image_coord = 0 - (lattice[axis] - move_coord[axis])
-                    if image_coord > -1.5:
-                        images[axis] = image_coord
-                        image_dict = {
-                            "x": images[0],
-                            "y": images[1],
-                            "z": images[2],
-                            "el": struct.sites[move_index].species_string,
-                        }
-                        dict_list.append(image_dict)
-
-            move_images = [move_index]
-            try:
-                atom_image = pd.DataFrame(dict_list)
-                i = len(atom_image)
-                atom_image.index = range(-i, 0)
-                sliced_df = pd.concat([sliced_df, atom_image])
-                for idx in atom_image.index:
-                    move_images.append(idx)
-            except:
-                pass
+            sliced_df = pd.concat(
+                [sliced_df, filtered_df]
+                )
 
             """ Call Voronoi function """
-
             points = sliced_df[["x", "y", "z"]].to_numpy()
             voro = Voronoi(points)
 
             """ Checking coordination number """
             # run pymatgen-modified coordination number function on moved atom
             element_list, el, neighbor_list = self.get_coordination(
-                move_images, voro, sliced_df, points, struct
+                move_indices, voro, sliced_df, points, struct
             )
 
             # check if the atom is near a surface
@@ -555,10 +550,8 @@ class Coordination(Validator):
                             <= self.surface_coordination[el][el_nn][1]
                         ):
                             pass
-                            # print(f'surface pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
                         else:
-                            # print(f'surface fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
-                            return False
+                            return False # when coordination number isn't right
                 else:
                     cn_constraints = self.coordination[el]
                     for el_nn in cn_constraints:
@@ -568,11 +561,9 @@ class Coordination(Validator):
                             <= el_cn
                             <= self.coordination[el][el_nn][1]
                         ):
-                            # print(f' pass {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
                             pass
                         else:
-                            # print(f' fail {el}: {self.surface_coordination[el][el_nn]}, {el_cn}, {el_nn}')
-                            return False
+                            return False # when coordination number isn't right
             elif self.surface_coordination is None:
                 cn_constraints = self.coordination[el]
                 for el_nn in cn_constraints:
@@ -584,7 +575,7 @@ class Coordination(Validator):
                     ):
                         pass
                     else:
-                        return False
+                        return False # when coordination number isn't right
 
             # run pymatgen-modified coordination number function on neighbor atoms
             for neighbor in neighbor_list:
@@ -611,7 +602,7 @@ class Coordination(Validator):
                             ):
                                 pass
                             else:
-                                return False
+                                return False  # when coordination number isn't right
                     else:
                         cn_constraints = self.coordination[el]
                         for el_nn in cn_constraints:
@@ -623,7 +614,7 @@ class Coordination(Validator):
                             ):
                                 pass
                             else:
-                                return False
+                                return False  # when coordination number isn't right
                 elif self.surface_coordination is None:
                     cn_constraints = self.coordination[el]
                     for el_nn in cn_constraints:

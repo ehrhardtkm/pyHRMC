@@ -40,6 +40,7 @@ rmc.run_rmc(
     validators=dict(),
     charges=dict(),
     pdf_cutoff=float(),
+    gaussian_blur=int(),
     max_steps=int()
     )
 ```
