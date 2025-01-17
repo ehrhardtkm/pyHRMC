@@ -11,15 +11,14 @@ import logging
 
 import pyhrmc.transformers as transform_mod
 import pyhrmc.validators as validator_mod
-from pyhrmc.core.slab import RdfSlab
-from pyhrmc.core.interpolator import CrossSection
+from pyhrmc.core.structure import Structure
+from pyhrmc.core.interpolator import Interpolator
 
 
 logging.basicConfig(level=logging.INFO)
 
 
 class RMC:
-
     def __init__(
         self,
         experimental_G_csv,
@@ -43,8 +42,8 @@ class RMC:
         self.dump_freq = dump_freq
 
         if self.hybrid == True:
-            from pyhrmc.core.hrmc import Lammps_HRMC
-            self.Lammps_HRMC = Lammps_HRMC
+            from pyhrmc.core.energy import Energy
+            self.Lammps_HRMC = Energy
 
         if self.hybrid == True and self.q_temp == None and self.batched_temp == None:
             raise RuntimeError(
@@ -87,7 +86,10 @@ class RMC:
                 )
             else:
                 keep_new = self.choose_acceptance(
-                    "single", new_structure, neighborlist, self.batched_error_constant
+                    "single", 
+                    new_structure, 
+                    neighborlist, 
+                    self.batched_error_constant
                 )
             if keep_new:
                 pass
@@ -104,6 +106,7 @@ class RMC:
         temp=None,
         lmp_input=None,
         task_id=None,
+        validator_objects=None
     ):
         max_unc = 0
         if self.hybrid == True:
@@ -117,6 +120,24 @@ class RMC:
         new_error, slope = structure.prdf_error(neighborlist)
 
         keep_new = True
+
+        """
+        If batched, then check the Validators again with the new structure
+        """
+
+        if version == "batch":
+            is_valid = True  # true until proven otherwise
+            for validator in validator_objects:
+                if not validator.check_structure(structure):
+                    is_valid = False
+                    break  # one failure is enough to stop and reject the structure
+            if not is_valid:
+                keep_new = False
+                if self.hybrid == True:
+                    return keep_new, new_error, max_unc
+                elif self.hybrid == False:
+                    return keep_new, new_error
+
 
         """
         REORGANIZE TO BE BASED ON IF HBRID == TRUE
@@ -202,6 +223,7 @@ class RMC:
             "AtomHop": {},  # consider adding a second, smaller step size "max_step": 0.2
         },
         validators={},
+        qmin = float(), 
         charges=None,
         # if defining charges as user:
         # charges = {
@@ -295,40 +317,40 @@ class RMC:
                     lmp_acc_in.append(line)
 
         # convert to our python class
-        initial_structure = RdfSlab.from_file(initial_structure)
+        initial_structure = Structure.from_file(initial_structure)
         initial_structure.xyz_df = initial_structure.xyz()
         # create neighborlist
         initial_structure_neighborlist = initial_structure.get_all_neighbors(r=10.0)
         num_atoms = len(initial_structure.sites)
 
         # cache/store interpolated radii
-        struct_consts = CrossSection(initial_structure)
+        struct_consts = Interpolator(initial_structure)
 
 
         if charges is not None:
             for site in initial_structure.sites:
-                # just choose first set of oxi state guesses in the returned tuple
                 site.oxi_state = charges[site.specie.symbol]
+            database_radii = struct_consts.database_ionic_radii()
+            interpolated_radii = struct_consts.interpolated_ionic_radii(
+                charges, database_radii
+                )
+            setattr(initial_structure, "interpolated_radii", interpolated_radii)
+            print(f"Interpolated radii: {interpolated_radii}")
         else:
-            valences = initial_structure.oxidation_state_list()
-            self.apply_oxi_state(valences, initial_structure)
-            charges = struct_consts.partial_charges()
-        database_radii = struct_consts.database_ionic_radii()
-        interpolated_radii = struct_consts.interpolated_ionic_radii(
-            charges, database_radii
-            )
-        setattr(initial_structure, "interpolated_radii", interpolated_radii)
+            charges = {}
+            for species in initial_structure.types_of_species:
+                el = species.name
+                charges[el] = 0
+            for site in initial_structure.sites:
+                site.oxi_state = 0          
 
         TCS = {}
         el_tuple = initial_structure.symbol_set
         for el in el_tuple:
             el_charge = charges[el]
-            TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV)
-
+            TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV, qmin)
         setattr(initial_structure, 'TCSs', TCS)
-        # CROSS_SECTIONS_CONSTANTS = {"Al": 5.704193e-2, "O": 2.029453e-2, "H": 1.04e-4}
-        # setattr(initial_structure, "TCSs", CROSS_SECTIONS_CONSTANTS)
-        # print(initial_structure.TCSs)
+        print(f"Scattering cross sections: {TCS}")
 
         # load experimental G(r)
         initial_structure.load_experimental_from_file(self.experimental_G_csv)
@@ -390,6 +412,7 @@ class RMC:
         """
         RUN RMC LOOP
         """
+        print("Starting RMC loops...")
         while self.nsteps < max_steps:
             self.nsteps += 1
             if self.nsteps % self.dump_freq == 0:
@@ -454,14 +477,17 @@ class RMC:
             if len(moved_atoms) == 0:
                 continue
 
-            all_changed = set()
+            move_indices = []
             for c_idx, c_site in moved_atoms:
                 new_structure.sites[c_idx] = c_site
+                move_indices.append(c_idx)
             # edit neighbor list here
             # BUG: switch to individuvudal neighbor method for speedup
             new_structure_neighborlist = new_structure.get_all_neighbors(r=10.0)
             # update xyz_df
             new_structure.xyz_df = new_structure.xyz()
+            #create list of all moved atoms in this batch
+            new_structure.move_indices = move_indices
 
             if self.hybrid == True:
                 keep_new, new_error, max_unc = self.choose_acceptance(
@@ -472,6 +498,7 @@ class RMC:
                     self.batched_temp,
                     lmp_input,
                     default_id,
+                    validator_objects
                 )
             else:
                 keep_new, new_error = self.choose_acceptance(
@@ -479,6 +506,7 @@ class RMC:
                     new_structure,
                     new_structure_neighborlist,
                     self.batched_error_constant,
+                    validator_objects = validator_objects
                 )
 
             if keep_new:

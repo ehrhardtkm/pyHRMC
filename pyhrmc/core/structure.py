@@ -5,7 +5,7 @@ import pandas as pd
 import itertools
 from scipy.ndimage import gaussian_filter1d, zoom
 from pymatgen.core import Structure
-from pyhrmc.core.rmc_rdf import PartialRadialDistributionFunction
+from pyhrmc.core.rdf import RDF
 
 # from pymatgen.analysis.bond_valence import BVAnalyzer
 import matplotlib.pyplot as plt
@@ -14,9 +14,11 @@ from typing import Sequence
 from pymatgen.core.sites import PeriodicSite, Site
 from pymatgen.core.composition import Composition
 import collections
+import warnings
 
+warnings.filterwarnings("ignore")
 
-class RdfSlab(Structure):
+class Structure(Structure):
     """
     Adds a few extra methods to Structures that are assumed to be 2D slabs.
 
@@ -182,7 +184,7 @@ class RdfSlab(Structure):
         # it never changes. (i.e move it to a separate method and use @cached_property)
 
         cutoff = 10
-        prdf_maker = PartialRadialDistributionFunction(
+        prdf_maker = RDF(
             cutoff=cutoff, bin_size=0.04, el_switch=self.el_switch, el_list=self.el_list
         )
         prdf_maker.fit([self])

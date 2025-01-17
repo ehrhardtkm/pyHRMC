@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pyhrmc.core.slab import RdfSlab
+from pyhrmc.core.structure import Structure
 import numpy as np
 import pandas as pd
 import math
@@ -10,7 +10,7 @@ import warnings
 from pymatgen.core.periodic_table import Species
 import logging
 
-class CrossSection(RdfSlab):
+class Interpolator(Structure):
     def __init__(self, struct):
         self.struct = struct
         logger = logging.getLogger(__name__)
@@ -2369,7 +2369,7 @@ class CrossSection(RdfSlab):
         return g, l_relativistic
 
     # method to calculate TCS after the appropriate row of values have been selected from database
-    def calc_TCS(self, a_terms, b_terms, g, l):
+    def calc_TCS(self, a_terms, b_terms, g, l, mintheta):
 
         a1 = a_terms[0]
         a2 = a_terms[1]
@@ -2447,67 +2447,73 @@ class CrossSection(RdfSlab):
                 ** 2
             )
 
-        TCS = integrate.quad(DCS, 0, 180)
+        TCS = integrate.quad(DCS, mintheta, 180)
+        # in angstroms^2
         TCS_corrected = TCS[0] / 100 * math.pi
-
-        #   TODO: check correctness of TCS to NIST
 
         # empirical corrective factor pi, so that values are coparable to NIST electron scattering cross section database
         # https://srdata.nist.gov/srd64/
 
         return TCS_corrected
 
-    def interpolated_TCS(self, el, partial_charge, keV):
+    def interpolated_TCS(self, el, partial_charge, keV, qmin):
         # get electron wavelength and relativistic correction
         g, l = self.electron_properties(keV)
         # partial_charges = self.partial_charges(struct)
 
+        #convert qmin to theta (in radians)
+        mintheta = math.asin( (qmin * l ) / ( 4 * math.pi ) )
+        mintheta = math.degrees(mintheta)
+
         # for el, charge in partial_charges.items():
         # get TCS for neutral atom
         a_terms_neutral, b_terms_neutral = self.select_terms(el, OS=0)
-        TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, g, l)
+        TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, g, l, mintheta)
 
-        try:
-            # select df rows of ions of same Z and different e- count
-            selected_rows = self.ion_df[self.ion_df["species"] == el]
-            # reset to start index from 0 in this subset
-            selected_rows = selected_rows.reset_index(drop=True)
-
-            Z = selected_rows.iat[0, 1]
-            # make list of relative e- change, initialize with 1 because there is always the atomic info (e- count/Z = 1 for atom)
-            rel_e_changes = [1]
-            # make list of the TCS that corresponds to xs list
-            # linearize by taking natural log
-            TCSs = [TCS1]
-            ln_TCSs = [math.log(TCS1)]
-
-            # append the available OS from the ion_dict column 1 and all rows
-            for i in range(selected_rows.shape[0]):
-                oxi_state = selected_rows.iat[i, 2]
-                e_count = Z - oxi_state
-                rel_e_changes.append(e_count / Z)
-                a_terms_ion, b_terms_ion = self.select_terms(el, OS=oxi_state)
-                TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l)
-                TCSs.append(TCS_ion)
-                ln_TCSs.append(math.log(TCS_ion))
-
-            x = np.array(rel_e_changes).reshape((-1, 1))
-            y = np.array(ln_TCSs)
-
-            # apply linear regression model
-            reg = LinearRegression().fit(x, y)
-            m = reg.coef_
-            b = reg.intercept_
-            rel_e_ion = (Z - partial_charge) / Z
-            interpolated_ln_TCS = m * rel_e_ion + b
-            interpolated_TCS = math.exp(interpolated_ln_TCS)
-        
-        except:
-            logging.warning(
-                f"No tabulated data for ionic cross-sections of {el} are available. " 
-                "Applying cross section of neutral atom."
-            )
+        if partial_charge == 0:
             interpolated_TCS = TCS1
+        else:
+            try:
+                # select df rows of ions of same Z and different e- count
+                selected_rows = self.ion_df[self.ion_df["species"] == el]
+                # reset to start index from 0 in this subset
+                selected_rows = selected_rows.reset_index(drop=True)
+
+                Z = selected_rows.iat[0, 1]
+                # make list of relative e- change, initialize with 1 because there is always the atomic info (e- count/Z = 1 for atom)
+                rel_e_changes = [1]
+                # make list of the TCS that corresponds to xs list
+                # linearize by taking natural log
+                TCSs = [TCS1]
+                ln_TCSs = [math.log(TCS1)]
+
+                # append the available OS from the ion_dict column 1 and all rows
+                for i in range(selected_rows.shape[0]):
+                    oxi_state = selected_rows.iat[i, 2]
+                    e_count = Z - oxi_state
+                    rel_e_changes.append(e_count / Z)
+                    a_terms_ion, b_terms_ion = self.select_terms(el, OS=oxi_state)
+                    TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l, qmin)
+                    TCSs.append(TCS_ion)
+                    ln_TCSs.append(math.log(TCS_ion))
+
+                x = np.array(rel_e_changes).reshape((-1, 1))
+                y = np.array(ln_TCSs)
+
+                # apply linear regression model
+                reg = LinearRegression().fit(x, y)
+                m = reg.coef_
+                b = reg.intercept_
+                rel_e_ion = (Z - partial_charge) / Z
+                interpolated_ln_TCS = m * rel_e_ion + b
+                interpolated_TCS = math.exp(interpolated_ln_TCS)
+            
+            except:
+                logging.warning(
+                    f"No tabulated data for ionic cross-sections of {el} are available. " 
+                    "Applying cross section of neutral atom."
+                )
+                interpolated_TCS = TCS1
 
         return interpolated_TCS
 

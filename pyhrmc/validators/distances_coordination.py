@@ -170,7 +170,7 @@ class DistancesCoordination(Validator):
             siw.append(nn_info)
         return siw
 
-    def get_default_radius(site):
+    def get_default_radius(self, site):
         """
         An internal method to get a "default" covalent/element radius
         Args:
@@ -267,180 +267,184 @@ class DistancesCoordination(Validator):
 
         return (area1 - area2) / (0.25 * math.pi * r**2)
 
-    def get_coordination(self, move_indices, voro, sliced_df, points, struct):
+    def get_coordination(self, move_index, voro, sliced_df, points, struct):
 
         neighbor_list = []
         element_list = []
+
         """ Check that all bonds are longer than minimum distance"""
+        # get absolute row position of move_index in sliced_df
+        # this corresponds to absolute row position in the points array
+        true_move_index = sliced_df.index.get_loc(move_index)
+        neighbors = [x for x in voro.ridge_points if true_move_index in x]
+        # ridge_points is a pair of atoms; we remove the pair that is not the center atom
+        neighbors = [a if b == true_move_index else b for a, b in neighbors]
 
-        for move_index in move_indices:
-            # get absolute row position of move_index in sliced_df
-            # this corresponds to absolute row position in the points array
-            true_move_index = sliced_df.index.get_loc(move_index)
-            neighbors = [x for x in voro.ridge_points if true_move_index in x]
-            # ridge_points is a pair of atoms; we remove the pair that is not the center atom
-            neighbors = [a if b == true_move_index else b for a, b in neighbors]
+        # get distances to neighbors
+        neighbor_points = np.array(points[neighbors], dtype=np.float64)
+        center_points = np.array(points[true_move_index], dtype=np.float64)
+        distances = np.linalg.norm(
+            center_points - neighbor_points, axis=1
+        )
 
-            # get distances to neighbors
-            neighbor_points = np.array(points[neighbors], dtype=np.float64)
-            center_points = np.array(points[true_move_index], dtype=np.float64)
-            distances = np.linalg.norm(
-                center_points - neighbor_points, axis=1
+        # compare distances to allowed distances based on element identity
+        # return false if the distance is too short
+        center_element = sliced_df.at[move_index, "el"]
+        for distance, neighbor in zip(distances, neighbors):
+            neighbor_element = sliced_df.iat[
+                neighbor, sliced_df.columns.get_loc("el")
+            ]
+            if self.min_distances is not None:
+                try:
+                    allowed_distance = self.min_distances[
+                        (center_element, neighbor_element)
+                    ]
+                except:
+                    allowed_distance = self.min_distances[
+                        (neighbor_element, center_element)
+                    ]
+                if distance < allowed_distance:
+                    return False
+
+        """  Check that all coordination numbers fall within a range """
+
+        nns = self.get_site_statistics(voro, true_move_index, struct, sliced_df)
+        nn_info = self._extract_nn_info(struct, nns)
+
+        # we are ignoring samples that have explicity porosity.
+        # see https://github.com/materialsproject/pymatgen/blob/56b8c965ea6a70b4970df1b5b41396f9a1fd5f77/pymatgen/analysis/local_env.py#L3952
+
+        # we are ignoring weighting of solid angle by electronegativity difference
+        # see https://github.com/materialsproject/pymatgen/blob/56b8c965ea6a70b4970df1b5b41396f9a1fd5f77/pymatgen/analysis/local_env.py#L3973
+
+        nn = sorted(nn_info, key=lambda x: x["weight"], reverse=True)
+
+        """distance_cutoffs: ([float, float]) - if not None, penalizes neighbor
+        distances greater than sum of covalent radii plus
+        distance_cutoffs[0]. Distances greater than covalent radii sum
+        plus distance_cutoffs[1] are enforced to have zero weight."""
+
+        distance_cutoffs = (0.5, 1)
+
+        bottom_surf = struct.thickness_z["min_z"] + self.surface_distance
+        top_surf = struct.thickness_z["max_z"] - self.surface_distance
+
+        # adjust solid angle weights based on distance
+        # get radius for the moved atom, which is always [0] in move_indices
+        r1 = self._get_radius(struct, move_index)
+        for entry in nn:
+            r2 = self._get_radius(struct, entry["true_site_index"])
+            if r1 > 0 and r2 > 0:
+                d = r1 + r2
+            else:
+                warnings.warn(
+                    "CrystalNN: cannot locate an appropriate radius, "
+                    "covalent or atomic radii will be used, this can lead "
+                    "to non-optimal results."
+                )
+                d = self.get_default_radius(
+                    struct[move_index]
+                ) + self.get_default_radius(entry["site"])
+
+            entry_coords = np.array(points[entry["site_index"]], dtype=np.float64)
+            dist = np.linalg.norm(center_points - entry_coords)
+            dist_weight: float = 0
+
+            cutoff_low = d + distance_cutoffs[0]
+            cutoff_high = d + distance_cutoffs[1]
+
+            if dist <= cutoff_low:
+                dist_weight = 1
+            elif dist < cutoff_high:
+                dist_weight = (
+                    math.cos(
+                        (dist - cutoff_low) / (cutoff_high - cutoff_low) * math.pi
+                    )
+                    + 1
+                ) * 0.5
+            entry["weight"] = entry["weight"] * dist_weight
+            try:
+                if center_points[2] < bottom_surf or center_points[2] > top_surf:
+                    # corrective factor to account for the fact that weight is max 0.5
+                    # if the center atom is at the surface
+                    # this correction is "conservative" since atom may not
+                    # be strictly at the surface
+                    entry["weight"] = entry["weight"] * 1.2       
+            except:
+                pass             
+
+        # sort nearest neighbors from highest to lowest weight
+        nn = sorted(nn, key=lambda x: x["weight"], reverse=True)
+
+        # setting maximum coordination number as 15
+        length = 15
+        nndata = ""
+        if nn[0]["weight"] == 0:
+            nn = [x for x in nn if x["weight"] > 0]
+
+        else:
+            for entry in nn:
+                entry["weight"] = round(entry["weight"], 3)
+
+            # remove entries with no weight
+            nn = [x for x in nn if x["weight"] > 0]
+
+            # get the transition distances, i.e. all distinct weights
+            dist_bins: list[float] = []
+            for entry in nn:
+                if not dist_bins or dist_bins[-1] != entry["weight"]:
+                    dist_bins.append(entry["weight"])
+            dist_bins.append(0)
+
+            # main algorithm to determine fingerprint from bond weights
+            cn_weights = {}  # CN -> score for that CN
+            cn_nninfo = {}  # CN -> list of nearneighbor info for that CN
+            for idx, val in enumerate(dist_bins):
+                if val != 0:
+                    nn_info = []
+                    for entry in nn:
+                        if entry["weight"] >= val:
+                            nn_info.append(entry)
+                    cn = len(nn_info)
+                    cn_nninfo[cn] = nn_info
+                    cn_weights[cn] = self._semicircle_integral(dist_bins, idx)
+
+            # add zero coord
+            cn0_weight = 1.0 - sum(cn_weights.values())
+            if cn0_weight > 0:
+                cn_nninfo[0] = []
+                cn_weights[0] = cn0_weight
+
+            nearby_atoms = [entry['true_site_index'] for entry in nn]
+
+
+            nndata = self.transform_to_length(
+                self.NNData(nn, cn_weights, cn_nninfo), length
             )
 
-            # compare distances to allowed distances based on element identity
-            # return false if the distance is too short
-            center_element = sliced_df.at[move_index, "el"]
-            for distance, neighbor in zip(distances, neighbors):
-                neighbor_element = sliced_df.iat[
-                    neighbor, sliced_df.columns.get_loc("el")
-                ]
-                if self.min_distances is not None:
-                    try:
-                        allowed_distance = self.min_distances[
-                            (center_element, neighbor_element)
-                        ]
-                    except:
-                        allowed_distance = self.min_distances[
-                            (neighbor_element, center_element)
-                        ]
-                    if distance < allowed_distance:
-                        print("Too short")
-                        return False
-
-            """  Check that all coordination numbers fall within a range """
-
-            nns = self.get_site_statistics(voro, true_move_index, struct, sliced_df)
-            nn_info = self._extract_nn_info(struct, nns)
-
-            # we are ignoring samples that have explicity porosity.
-            # see https://github.com/materialsproject/pymatgen/blob/56b8c965ea6a70b4970df1b5b41396f9a1fd5f77/pymatgen/analysis/local_env.py#L3952
-
-            # we are ignoring weighting of solid angle by electronegativity difference
-            # see https://github.com/materialsproject/pymatgen/blob/56b8c965ea6a70b4970df1b5b41396f9a1fd5f77/pymatgen/analysis/local_env.py#L3973
-
-            nn = sorted(nn_info, key=lambda x: x["weight"], reverse=True)
-
-            """distance_cutoffs: ([float, float]) - if not None, penalizes neighbor
-            distances greater than sum of covalent radii plus
-            distance_cutoffs[0]. Distances greater than covalent radii sum
-            plus distance_cutoffs[1] are enforced to have zero weight."""
-
-            distance_cutoffs = (0.5, 1)
-
-            bottom_surf = struct.thickness_z["min_z"] + self.surface_distance
-            top_surf = struct.thickness_z["max_z"] - self.surface_distance
-
-            # adjust solid angle weights based on distance
-            # get radius for the moved atom, which is always [0] in move_indices
-            r1 = self._get_radius(struct, move_index)
+            max_key = max(nndata.cn_weights, key=lambda k: nndata.cn_weights[k])
+            nn = nndata.cn_nninfo[max_key]
             for entry in nn:
-                r2 = self._get_radius(struct, entry["true_site_index"])
-                if r1 > 0 and r2 > 0:
-                    d = r1 + r2
-                else:
-                    warnings.warn(
-                        "CrystalNN: cannot locate an appropriate radius, "
-                        "covalent or atomic radii will be used, this can lead "
-                        "to non-optimal results."
-                    )
-                    d = self._get_default_radius(
-                        struct[move_index]
-                    ) + self._get_default_radius(entry["site"])
+                entry["weight"] = 1
 
-                entry_coords = np.array(points[entry["site_index"]], dtype=np.float64)
-                dist = np.linalg.norm(center_points - entry_coords)
-                dist_weight: float = 0
+        for n in nn:
+            index = sliced_df.iloc[n["site_index"]].name
+            neighbor_list.append(index)
+            el = sliced_df.iloc[n["site_index"]]["el"]
+            element_list.append(el)
 
-                cutoff_low = d + distance_cutoffs[0]
-                cutoff_high = d + distance_cutoffs[1]
-
-                if dist <= cutoff_low:
-                    dist_weight = 1
-                elif dist < cutoff_high:
-                    dist_weight = (
-                        math.cos(
-                            (dist - cutoff_low) / (cutoff_high - cutoff_low) * math.pi
-                        )
-                        + 1
-                    ) * 0.5
-                entry["weight"] = entry["weight"] * dist_weight
-                try:
-                    if center_points[2] < bottom_surf or center_points[2] > top_surf:
-                        # corrective factor to account for the fact that weight is max 0.5
-                        # if the center atom is at the surface
-                        # this correction is "conservative" since atom may not
-                        # be strictly at the surface
-                        entry["weight"] = entry["weight"] * 1.2       
-                except:
-                    pass             
-
-            # sort nearest neighbors from highest to lowest weight
-            nn = sorted(nn, key=lambda x: x["weight"], reverse=True)
-
-            # setting maximum coordination number as 15
-
-            length = 15
-            nndata = ""
-            if nn[0]["weight"] == 0:
-                nn = [x for x in nn if x["weight"] > 0]
-
-            else:
-                for entry in nn:
-                    entry["weight"] = round(entry["weight"], 3)
-
-                # remove entries with no weight
-                nn = [x for x in nn if x["weight"] > 0]
-
-                # get the transition distances, i.e. all distinct weights
-                dist_bins: list[float] = []
-                for entry in nn:
-                    if not dist_bins or dist_bins[-1] != entry["weight"]:
-                        dist_bins.append(entry["weight"])
-                dist_bins.append(0)
-
-                # main algorithm to determine fingerprint from bond weights
-                cn_weights = {}  # CN -> score for that CN
-                cn_nninfo = {}  # CN -> list of nearneighbor info for that CN
-                for idx, val in enumerate(dist_bins):
-                    if val != 0:
-                        nn_info = []
-                        for entry in nn:
-                            if entry["weight"] >= val:
-                                nn_info.append(entry)
-                        cn = len(nn_info)
-                        cn_nninfo[cn] = nn_info
-                        cn_weights[cn] = self._semicircle_integral(dist_bins, idx)
-
-                # add zero coord
-                cn0_weight = 1.0 - sum(cn_weights.values())
-                if cn0_weight > 0:
-                    cn_nninfo[0] = []
-                    cn_weights[0] = cn0_weight
-
-                nndata = self.transform_to_length(
-                    self.NNData(nn, cn_weights, cn_nninfo), length
-                )
-
-                max_key = max(nndata.cn_weights, key=lambda k: nndata.cn_weights[k])
-                nn = nndata.cn_nninfo[max_key]
-                for entry in nn:
-                    entry["weight"] = 1
-
-            for n in nn:
-                index = sliced_df.iloc[n["site_index"]].name
-                neighbor_list.append(index)
-                el = sliced_df.iloc[n["site_index"]]["el"]
-                element_list.append(el)
-
-        return element_list, center_element, neighbor_list
+        # if center_element == "Al":
+        #     if len(neighbor_list) < 4:
+        #         print(move_index)
+        #         print(neighbor_list)
+        return element_list, center_element, neighbor_list, nearby_atoms
 
     def check_structure(self, struct):
 
         move_indices = struct.move_indices
 
         d = struct.xyz_df
-        slice_distance = 5.23  # in Angstroms, should equal two coordnation spheres
+        slice_distance = 9  # in Angstroms, should equal two coordnation spheres
 
         for move_index in move_indices:
             """Slice the structure around the atom in question"""
@@ -567,8 +571,8 @@ class DistancesCoordination(Validator):
             """ Checking coordination number """
             # run pymatgen-modified coordination number function on moved atom
             try:
-                element_list, el, neighbor_list = self.get_coordination(
-                    move_indices, voro, sliced_df, points, struct
+                element_list, el, neighbor_list, nearby_atoms = self.get_coordination(
+                    move_index, voro, sliced_df, points, struct
                 )
             except:
                 return False  # when distances are too short
@@ -616,12 +620,12 @@ class DistancesCoordination(Validator):
                         pass
                     else:
                         return False # when coordination number isn't right
-
+ 
             # run pymatgen-modified coordination number function on neighbor atoms
-            for neighbor in neighbor_list:
+            for atom in nearby_atoms:
                 try:
-                    element_list, el, neighbor_list = self.get_coordination(
-                        [neighbor], voro, sliced_df, points, struct
+                    element_list, el, _, _  = self.get_coordination(
+                        atom, voro, sliced_df, points, struct
                     )
                 except:
                     return False  # when distances are too short

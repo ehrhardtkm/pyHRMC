@@ -17,9 +17,9 @@ from matminer.featurizers.base import BaseFeaturizer
 import bisect
 
 
-class PartialRadialDistributionFunction(BaseFeaturizer):
+class RDF(BaseFeaturizer):
     """
-    Compute the partial radial distribution function (PRDF) of an xtal structure
+    Compute the partial radial distribution functions (PRDF) of an xtal structure
 
     The PRDF of a crystal structure is the radial distribution function broken
     down for each pair of atom types.  The PRDF was proposed as a structural

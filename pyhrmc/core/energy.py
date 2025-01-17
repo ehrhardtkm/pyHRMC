@@ -5,7 +5,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from ase.io import write
 
 
-class Lammps_HRMC:
+class Energy:
     def __init__(self, lmp_file, task_id):
         self.lmp = lammps.lammps(cmdargs=["-log", "none", "-screen", "none", "-nocite"])
         self.lmp_file = lmp_file
