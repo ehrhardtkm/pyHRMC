@@ -10,7 +10,7 @@ DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')
 # Directly specify the two files you want to use
 input_files = {
     'al2o3_5nm_gr.txt': os.path.join(DATA_FOLDER, 'al2o3_5nm_gr.txt'),
-    'POSCAR_47A-d33': os.path.join(DATA_FOLDER, 'POSCAR_47A-d33'),
+    'ularge_3.0.vasp': os.path.join(DATA_FOLDER, 'ularge_3.0.vasp'),
     'in.lmp': os.path.join(DATA_FOLDER, 'in.lmp'),
     'in_init.lmp': os.path.join(DATA_FOLDER, 'in_init.lmp'),
     'in_accept.lmp': os.path.join(DATA_FOLDER, 'in_accept.lmp')
@@ -52,7 +52,7 @@ def test_hrmc_std(hybrid, capfd, cleanup_output_files):
     max_steps = 10
     rmc.run_rmc(
         num_processes = 1,
-        initial_structure=input_files['POSCAR_47A-d33'],
+        initial_structure=input_files['ularge_3.0.vasp'],
         keV=200,
         prdf_args={"bin_size": 0.04},
         # error_constant=0.05,
