@@ -20,8 +20,8 @@ class DistancesCoordination(Validator):
     def __init__(
         self,
         BulkCoordinationRange,
-        SurfaceCoordinationRange,
-        SurfaceDistance,
+        SurfaceCoordinationRange = None,
+        SurfaceDistance = None,
         MinDistances = None,
     ):
         self.min_distances = MinDistances
@@ -29,6 +29,17 @@ class DistancesCoordination(Validator):
         self.surface_coordination = SurfaceCoordinationRange
         self.surface_distance = SurfaceDistance
         self.NNData = NNData
+
+        if self.surface_coordination is not None:
+            if self.surface_distance is None:
+                raise RuntimeError(
+                            "If using surface coordination constraints, please select a value for the surface distance."
+                        )
+        if self.surface_distance is not None:
+            if self.surface_coordination is None:
+                raise RuntimeError(
+                            "If using a surface distance, please select surface coordination constraints."
+                        )
 
     @staticmethod
     def vol_tetra(vt1, vt2, vt3, vt4):
@@ -326,8 +337,9 @@ class DistancesCoordination(Validator):
 
         distance_cutoffs = (0.5, 1)
 
-        bottom_surf = struct.thickness_z["min_z"] + self.surface_distance
-        top_surf = struct.thickness_z["max_z"] - self.surface_distance
+        if self.surface_distance is not None:
+            bottom_surf = struct.thickness_z["min_z"] + self.surface_distance
+            top_surf = struct.thickness_z["max_z"] - self.surface_distance
 
         # adjust solid angle weights based on distance
         # get radius for the moved atom, which is always [0] in move_indices
@@ -433,10 +445,6 @@ class DistancesCoordination(Validator):
             el = sliced_df.iloc[n["site_index"]]["el"]
             element_list.append(el)
 
-        # if center_element == "Al":
-        #     if len(neighbor_list) < 4:
-        #         print(move_index)
-        #         print(neighbor_list)
         return element_list, center_element, neighbor_list, nearby_atoms
 
     def check_structure(self, struct):
@@ -631,6 +639,7 @@ class DistancesCoordination(Validator):
                     return False  # when distances are too short
 
                 # check if the atom is near a surface
+
                 if self.surface_coordination is not None:
                     if (
                         struct.sites[move_index].z

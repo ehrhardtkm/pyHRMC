@@ -6,5 +6,4 @@ from .base import Validator
 from .distances_coordination import DistancesCoordination
 from .slab_thickness import SlabThickness
 from .target_density import TargetDensity
-from .coordination import Coordination
 from .site_distance  import SiteDistance
