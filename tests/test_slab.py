@@ -62,19 +62,18 @@ def test_hrmc_std(hybrid, capfd, cleanup_output_files):
         },
 
         validators={
-            "SlabThickness": {"max_thickness": 47.4},
+            "SlabThickness": {"max_thickness": 51.5},
             "DistancesCoordination": {
                 "MinDistances": {
-                    ("Al", "Al"): 1.6,
+                    ("Al", "Al"): 2.0,
                     ("Al", "O"): 1.6,
-                    ("O", "O"): 1.6
-                },
-                "BulkCoordinationRange": {"Al": {"Al" : [0, 2], "O": [2, 7]}, "O": {"Al": [1, 4], "O": [0, 1]} },
-                "SurfaceCoordinationRange": {"Al": {"Al": [0, 2], "O": [1, 7]}, "O": {"Al": [1, 4], "O": [0, 1]} },
-                "SurfaceDistance": 5
-                }
+                    ("O", "O"): 2.0
+                    },
+                "BulkCoordinationRange": {"Al": {"Al" : [0, 0], "O": [4, 6]}, "O": {"Al": [3, 4], "O": [0, 0]} },
+                "SurfaceCoordinationRange": {"Al": {"Al": [0, 0], "O": [4, 6]}, "O": {"Al": [2, 4], "O": [0, 0]} },
+                "SurfaceDistance": 3
+                    }
             },
-
         lmp_init=input_files['in_init.lmp'],
         lmp_test = input_files['in.lmp'],
         lmp_accept=input_files['in_accept.lmp'],
