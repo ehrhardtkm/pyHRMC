@@ -45,7 +45,8 @@ def test_hrmc_std(hybrid, capfd, cleanup_output_files):
         q_scatter = 1, 
         q_temp = 0.99995, 
         init_temp = 1000, 
-        hybrid = hybrid
+        hybrid = hybrid,
+        dump_freq = 500
         )
     
     max_steps = 10
@@ -77,6 +78,7 @@ def test_hrmc_std(hybrid, capfd, cleanup_output_files):
         lmp_init=input_files['in_init.lmp'],
         lmp_test = input_files['in.lmp'],
         lmp_accept=input_files['in_accept.lmp'],
+        qmin=2,
         max_steps= max_steps
     )
 
