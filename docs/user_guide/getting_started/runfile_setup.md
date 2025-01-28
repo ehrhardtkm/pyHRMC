@@ -38,6 +38,7 @@ rmc.run_rmc(
     prdf_args={“bin_size:float}, 
     transformations={“AtomHop”:{}}, 
     validators=dict(),
+    qmin=float(),
     charges=dict(),
     pdf_cutoff=float(),
     gaussian_blur=int(),
@@ -64,14 +65,8 @@ rmc.run_rmc(
         - **SurfaceDistance**
     - **SiteDistances**
     - **TargetDensity**
-- **charges:** this is an optional argument that the user may use to bypass the built-in method of interpolating partial charges for each of the elements in the structure. Additionally, if users desire that no partial charges are used and neutral atoms are assumed, they may set the charge values to 0. If using this argument, follow the following format:
-'''
-charges = {
-    "species1": float(charge),
-    "species2" = float(charge),
-    ...
-    }
-'''
+- **qmin:** minimum q value of the experimental scattering data.
+- **charges:** NOTE: At this time, we do not advise users to use this argument for their simulations.
 - **pdf_cutoff:** this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.
 - **gaussian_blur:** this parameter is used when calculating the structure's PDF to determine the degree of Guassian smearing that is used from [scipy.ndimage.gaussian_filter1d](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter1d.html). This value corresponds to sigma in the linked scipy documentation, but is included here as `gaussian_blur` to avoid confusion.
 - **max_steps:** maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. 
@@ -82,29 +77,34 @@ An example runfile.py for a simulation of amorphous alumina is shown below:
 from pyhrmc.core.rmc import RMC
 
 if __name__ == "__main__":
-   
-    rmc = RMC(experimental_G_csv="gr.txt", sigma = 0.2, q_scatter = 1, q_temp = 0.99995, init_temp = 1000, dump_freq = 500)
+
+    rmc = RMC(experimental_G_csv="35_uncharged_gr.txt", sigma = 0.1, q_scatter = 0.99995, q_temp = 0.99995, init_temp = 1000, dump_freq = 500)
     rmc.run_rmc(
         num_processes = 16,
-        initial_structure="structure.vasp",
-        experimental_G_csv="al2o3_5nm_gr.txt",
+        initial_structure="ularge_3.0.vasp",
+        experimental_G_csv="35_uncharged_gr.txt",
         keV=200,
         prdf_args={"bin_size": 0.04},
         # error_constant=0.05,
         transformations={
-            # "ASECoordinatePerturbation":{}, #simmate version of RattleMutation from ase, rattle_prob auto set to 0.3
             "AtomHop": {}, # consider adding a second, smaller step size "max_step": 0.2
         },
 
         validators={
             "SlabThickness": {"max_thickness": 51.5},
-            "Coordination": {
-                "BulkCoordinationRange": {"Al": {"Al" : [0, 1], "O": [2, 7]}, "O": {"Al": [1, 4], "O": [0, 1]} },
-                "SurfaceCoordinationRange": {"Al": {"Al": [0, 0], "O": [3, 7]}, "O": {"Al": [1, 4], "O": [0, 1]} },
+            "DistancesCoordination": {
+                "MinDistances": {
+                    ("Al", "Al"): 2.0,
+                    ("Al", "O"): 1.6,
+                    ("O", "O"): 2.0
+                    },
+                "BulkCoordinationRange": {"Al": {"Al" : [0, 0], "O": [4, 6]}, "O": {"Al": [3, 4], "O": [0, 0]} },
+                "SurfaceCoordinationRange": {"Al": {"Al": [0, 0], "O": [4, 6]}, "O": {"Al": [2, 4], "O": [0, 0]} },
                 "SurfaceDistance": 3
-                }
+                    }
             },
-            gaussian_blur = 2,
+        qmin = 2,
         max_steps= 1000000,
     )
+
 ```

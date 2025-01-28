@@ -25,7 +25,7 @@ pyHRMC is a Python implementation of this HRMC algorithm, with several added fea
 
 ## Resources
 
-This code was developed with tools from [pymatgen](https://pymatgen.org/). 
+This code was developed with tools from [pymatgen](https://pymatgen.org/) and matminer[https://hackingmaterials.lbl.gov/matminer/]. 
 
 For bugs and other issues, please submit them on [Github](https://github.com/ehrhardtkm/pyHRMC).
 
@@ -40,4 +40,4 @@ pyHRMC is currently comptability with Python <= 3.11.
 ## License
 pyHRMC is licensed under a 3-clause BSD license. Portions of the code were borrowed from pymatgen, matminer, and Simmate, which are also licensed under MIT and BSD-style licenses. For details, please see [LICENSE](https://github.com/ehrhardtkm/pyHRMC/LICENSE.md).
 
-## References
+

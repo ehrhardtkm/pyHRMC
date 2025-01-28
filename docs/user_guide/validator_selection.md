@@ -11,31 +11,6 @@ SlabThickness
 ```
 When setting a `SlabThickness` constraint, a `max_thickness` value must be set. This is the max thickness that the simulation will allow a slab cell to reach in the z-direction (note that this is thickness, not the max Cartesian coordinate). This constraint should not be used when running bulk cell simulations, since cell length along z should be roughly equal to the thickness.
 
-Coordination
----
-```
-"Coordination": {
-    "BulkCoordinationRange": {
-        "species": {
-            "species1" : [int(min_coordination), int(max_coordination)], 
-            "species2": [int(min_coordination), int(max_coordination)], 
-            ...
-            }
-        ...
-        },
-    "SurfaceCoordinationRange" = None,
-    "SurfaceDistance" = None
-}
-```
-
-For the `BulkCoordinationRange` and `SurfaceCoordinationRange`, the `Coordination` constraint expects a dictionary for each species type. Within each dictionary, a subdictionary with the minimum and maximum allowable coordination numbers should be included for each species type in the structure. This should look like a nested dictionary. Below is an example for alumina (Al and O species):
-```
-"BulkCoordinationRange": {
-    "Al": {"Al" : [0, 2], "O": [2, 7]}, 
-    "O": {"Al": [1, 4], "O": [0, 1]} 
-    }
-``` 
-The `SurfaceDistance` can be an integer or float and is used to differentiate surface and bulk atoms. This value is the distance from the top and bottom of the slab cell which contains the region of atoms that are constrained by `SurfaceCoordiantionRange`. All remaining atoms between these two surface regions are constrained by `BulkCoordinationRange`.
 
 DistancesCoordination
 ---
@@ -58,7 +33,16 @@ DistancesCoordination
     }
 ```
 
-In addition to the same coordination check that is executed by the `Coordination` constraint, `DistanceCoordination` will conduct a check to determine if any interatomic distances are below the user-defined minimum distances. Distance cutoffs for this constrain should be defined pairwise for the species types. If any distances below the corresponding cutoff is found, the step will automatically be rejected.
+For the `BulkCoordinationRange` and `SurfaceCoordinationRange`, the `DistancesCoordination` constraint expects a dictionary for each species type. Within each dictionary, a subdictionary with the minimum and maximum allowable coordination numbers should be included for each species type in the structure. This should look like a nested dictionary. Below is an example for alumina (Al and O species):
+```
+"BulkCoordinationRange": {
+    "Al": {"Al" : [0, 2], "O": [2, 7]}, 
+    "O": {"Al": [1, 4], "O": [0, 1]} 
+    }
+``` 
+The `SurfaceDistance` can be an integer or float and is used to differentiate surface and bulk atoms. This value is the distance from the top and bottom of the slab cell which contains the region of atoms that are constrained by `SurfaceCoordiantionRange`. All remaining atoms between these two surface regions are constrained by `BulkCoordinationRange`.
+
+Additionally, `DistanceCoordination` will conduct a check to determine if any interatomic distances are below the user-defined minimum distances. Distance cutoffs for this constrain should be defined pairwise for the species types. If any distances below the corresponding cutoff is found, the step will automatically be rejected.
 
 When checking the MinDistances, the program will recognize the pairwise combination regardless of order (e.g. ("Al", "O") is the same as ("O", "Al")). Below is an example for alumina (Al and O species):
 ```
@@ -80,7 +64,7 @@ When checking the MinDistances, the program will recognize the pairwise combinat
     }
 ```
 
-If the same minimum distance can be applied to all element pairs, the `SiteDistance` constraint will be faster and can be used in conjunction with the `Coordination` constraint. 
+If the same minimum distance can be applied to all element pairs, the `SiteDistance` constraint will be faster. 
 
 
 SiteDistance
