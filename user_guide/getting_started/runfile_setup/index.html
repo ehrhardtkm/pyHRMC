@@ -180,8 +180,10 @@ import multiprocessing
     prdf_args={“bin_size:float}, 
     transformations={“AtomHop”:{}}, 
     validators=dict(),
+    qmin=float(),
     charges=dict(),
     pdf_cutoff=float(),
+    gaussian_blur=int(),
     max_steps=int()
     )
 </code></pre>
@@ -216,14 +218,8 @@ import multiprocessing
 <li><strong>TargetDensity</strong></li>
 </ul>
 </li>
-<li><strong>charges:</strong> this is an optional argument that the user may use to bypass the built-in method of interpolating partial charges for each of the elements in the structure. Additionally, if users desire that no partial charges are used and neutral atoms are assumed, they may set the charge values to 0. If using this argument, follow the following format:
-'''
-charges = {
-    "species1": float(charge),
-    "species2" = float(charge),
-    ...
-    }
-'''</li>
+<li><strong>qmin:</strong> minimum q value of the experimental scattering data.</li>
+<li><strong>charges:</strong> NOTE: At this time, we do not advise users to use this argument for their simulations.</li>
 <li><strong>pdf_cutoff:</strong> this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.</li>
 <li><strong>gaussian_blur:</strong> this parameter is used when calculating the structure's PDF to determine the degree of Guassian smearing that is used from <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter1d.html">scipy.ndimage.gaussian_filter1d</a>. This value corresponds to sigma in the linked scipy documentation, but is included here as <code>gaussian_blur</code> to avoid confusion.</li>
 <li><strong>max_steps:</strong> maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </li>
@@ -234,30 +230,35 @@ charges = {
 
 if __name__ == &quot;__main__&quot;:
 
-    rmc = RMC(experimental_G_csv=&quot;gr.txt&quot;, sigma = 0.2, q_scatter = 1, q_temp = 0.99995, init_temp = 1000, dump_freq = 500)
+    rmc = RMC(experimental_G_csv=&quot;35_uncharged_gr.txt&quot;, sigma = 0.1, q_scatter = 0.99995, q_temp = 0.99995, init_temp = 1000, dump_freq = 500)
     rmc.run_rmc(
         num_processes = 16,
-        initial_structure=&quot;structure.vasp&quot;,
-        experimental_G_csv=&quot;al2o3_5nm_gr.txt&quot;,
+        initial_structure=&quot;ularge_3.0.vasp&quot;,
+        experimental_G_csv=&quot;35_uncharged_gr.txt&quot;,
         keV=200,
         prdf_args={&quot;bin_size&quot;: 0.04},
         # error_constant=0.05,
         transformations={
-            # &quot;ASECoordinatePerturbation&quot;:{}, #simmate version of RattleMutation from ase, rattle_prob auto set to 0.3
             &quot;AtomHop&quot;: {}, # consider adding a second, smaller step size &quot;max_step&quot;: 0.2
         },
 
         validators={
             &quot;SlabThickness&quot;: {&quot;max_thickness&quot;: 51.5},
-            &quot;Coordination&quot;: {
-                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 1], &quot;O&quot;: [2, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
-                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 0], &quot;O&quot;: [3, 7]}, &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} },
+            &quot;DistancesCoordination&quot;: {
+                &quot;MinDistances&quot;: {
+                    (&quot;Al&quot;, &quot;Al&quot;): 2.0,
+                    (&quot;Al&quot;, &quot;O&quot;): 1.6,
+                    (&quot;O&quot;, &quot;O&quot;): 2.0
+                    },
+                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 0], &quot;O&quot;: [4, 6]}, &quot;O&quot;: {&quot;Al&quot;: [3, 4], &quot;O&quot;: [0, 0]} },
+                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 0], &quot;O&quot;: [4, 6]}, &quot;O&quot;: {&quot;Al&quot;: [2, 4], &quot;O&quot;: [0, 0]} },
                 &quot;SurfaceDistance&quot;: 3
-                }
+                    }
             },
-            gaussian_blur = 2,
+        qmin = 2,
         max_steps= 1000000,
     )
+
 </code></pre></div>
             </div>
         </div>

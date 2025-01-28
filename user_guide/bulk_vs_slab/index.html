@@ -136,21 +136,21 @@
 
 <h1 id="bulk-vs-slab-simulations">Bulk vs slab simulations</h1>
 <p>pyHRMC is designed to handle bulk cells or slab cells in a vacuum. While the package will automatically detect the cell type and handle periodic boundary conditions, several considerations and limitations exist. </p>
-<p>For a slab cell, pyHRMC assumes that the vacuum space above and below the cell exist in the z-direction, and that the structure extends fully to the cell boundaries in the x and y directions. Additionally, the slab must be orthogonal to the z-axis for the package to correctly detect the cell thickness. When running a slab cell simulation and employing the <code>Validators.coordination</code> constraint, be sure to set constraints for <code>SurfaceCoordinationRange</code> and <code>SurfaceDistance</code> in addition to <code>BulkCoordinationRange</code>. </p>
+<p>For a slab cell, pyHRMC assumes that the vacuum space above and below the cell exist in the z-direction, and that the structure extends fully to the cell boundaries in the x and y directions. Additionally, the slab must be orthogonal to the z-axis for the package to correctly detect the cell thickness. When running a slab cell simulation and employing the <code>Validators.DistancesCoordination</code> constraint, be sure to set constraints for <code>SurfaceCoordinationRange</code> and <code>SurfaceDistance</code> in addition to <code>BulkCoordinationRange</code>. </p>
 <p>For example:</p>
-<pre><code>&quot;Coordination&quot;: {
-    &quot;BulkCoordinationRange&quot;: {
-        &quot;Al&quot;: {&quot;Al&quot; : [0, 2], &quot;O&quot;: [2, 7]}, 
-        &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} 
+<pre><code>&quot;DistancesCoordination&quot;: {
+    &quot;MinDistances&quot;: {
+        (&quot;Al&quot;, &quot;Al&quot;): 2.0,
+        (&quot;Al&quot;, &quot;O&quot;): 1.6,
+        (&quot;O&quot;, &quot;O&quot;): 2.0
         },
-    &quot;SurfaceCoordinationRange&quot;: {
-        &quot;Al&quot;: {&quot;Al&quot;: [0, 2], &quot;O&quot;: [1, 7]}, 
-        &quot;O&quot;: {&quot;Al&quot;: [1, 4], &quot;O&quot;: [0, 1]} 
-        },
-    &quot;SurfaceDistance&quot;: 5
-    }
+    &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 0], &quot;O&quot;: [4, 6]}, &quot;O&quot;: {&quot;Al&quot;: [3, 4], &quot;O&quot;: [0, 0]} },
+    &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 0], &quot;O&quot;: [4, 6]}, &quot;O&quot;: {&quot;Al&quot;: [2, 4], &quot;O&quot;: [0, 0]} },
+    &quot;SurfaceDistance&quot;: 3
+        }
+
 </code></pre>
-<p>In the event of performing a bulk HRMC simulation instead of a slab, the cell must also be orthogonal in the z-axis and assumes that there is <strong>not</strong> vacuum space in the z-direction. If the difference between the lattice dimension in the z-direction and the structure thickness along z is greater than 1, the package will incorrectly assume that the cell is a slab and may perform erroneously. The <code>Validators.coordination</code> constraint should be used with only <code>BulkCoordinationRange</code>.</p></div>
+<p>In the event of performing a bulk HRMC simulation instead of a slab, the cell must also be orthogonal in the z-axis and assumes that there is <strong>not</strong> vacuum space in the z-direction. If the difference between the lattice dimension in the z-direction and the structure thickness along z is greater than 1, the package will incorrectly assume that the cell is a slab and may perform erroneously. The <code>Validators.DistancesCoordination</code> constraint should be used with only <code>BulkCoordinationRange</code>.</p></div>
             </div>
         </div>
 
