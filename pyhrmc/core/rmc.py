@@ -211,6 +211,23 @@ class RMC:
                 el_list.append(structure.sites[i].specie.symbol)
             j = i
         return el_switch, el_list
+    
+
+    def coord_status(self, struct, validator_objects):
+        validator = next((validator for validator in validator_objects if validator.__class__.__name__ == "DistancesCoordination"), None)
+        if validator != None:
+            composition = struct.composition.elements
+            el_list = []
+            for el_type in composition:
+                el_list.append(el_type.symbol)
+            for idx, site in enumerate(struct):
+                print(idx)
+                points,sliced_df, voro = validator.get_voro(idx, struct)
+                element_list, _, _, _ = validator.get_coordination(idx, voro, sliced_df, points, struct)
+                site.cn = {}
+                for el_nn in el_list:
+                    site.cn[el_nn] = len([nn for nn in element_list if nn == el_nn])
+        return struct
 
     def run_rmc(
         self,
@@ -288,7 +305,7 @@ class RMC:
         """
 
         # energy weighting staging
-        final_temp = 100
+        final_temp = 300
 
         # batch number staging
         num_batch = num_processes
@@ -373,6 +390,8 @@ class RMC:
                 raise Exception(f"Unknown validator provided ({v_name})")
             validator_objects.append(v_obj)
 
+        initial_structure = self.coord_status(initial_structure, validator_objects)
+
         """
         INITIALIZE RMC LOOP
         """
@@ -451,7 +470,6 @@ class RMC:
 
             moves_attempted += num_batch
             moved_atoms = []
-
             for candidate_structure in results:
                 if candidate_structure:
                     # new_energy = energy
@@ -555,10 +573,10 @@ class RMC:
                     self.batched_temp = self.batched_temp * self.q_temp ** (
                         (self.nsteps * num_processes) / 1000000
                     )
-                self.batched_error_constant = (
-                    self.batched_error_constant
-                    * self.q_scatter ** (((self.nsteps * num_processes) / 1000000) / 2)
-                )
+                    self.batched_error_constant = (
+                        self.batched_error_constant
+                        * self.q_scatter ** (((self.nsteps * num_processes) / 1000000) / 2)
+                    )
 
         output_structure = current_structure
         output_structure.to(fmt="POSCAR", filename="output.vasp")

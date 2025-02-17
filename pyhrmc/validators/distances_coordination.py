@@ -278,11 +278,7 @@ class DistancesCoordination(Validator):
 
         return (area1 - area2) / (0.25 * math.pi * r**2)
 
-    def get_coordination(self, move_index, voro, sliced_df, points, struct):
-
-        neighbor_list = []
-        element_list = []
-
+    def check_distance(self, move_index, voro, sliced_df, points):
         """ Check that all bonds are longer than minimum distance"""
         # get absolute row position of move_index in sliced_df
         # this corresponds to absolute row position in the points array
@@ -316,6 +312,27 @@ class DistancesCoordination(Validator):
                     ]
                 if distance < allowed_distance:
                     return False
+        return True
+
+
+    def get_coordination(self, move_index, voro, sliced_df, points, struct):
+
+        neighbor_list = []
+        element_list = []
+        # get absolute row position of move_index in sliced_df
+        # this corresponds to absolute row position in the points array
+        true_move_index = sliced_df.index.get_loc(move_index)
+        neighbors = [x for x in voro.ridge_points if true_move_index in x]
+        # ridge_points is a pair of atoms; we remove the pair that is not the center atom
+        neighbors = [a if b == true_move_index else b for a, b in neighbors]
+
+        # get distances to neighbors
+        neighbor_points = np.array(points[neighbors], dtype=np.float64)
+        center_points = np.array(points[true_move_index], dtype=np.float64)
+        distances = np.linalg.norm(
+            center_points - neighbor_points, axis=1
+        )
+        center_element = sliced_df.at[move_index, "el"]
 
         """  Check that all coordination numbers fall within a range """
 
@@ -447,140 +464,147 @@ class DistancesCoordination(Validator):
 
         return element_list, center_element, neighbor_list, nearby_atoms
 
-    def check_structure(self, struct):
-
-        move_indices = struct.move_indices
+    def get_voro(self, move_index, struct):
 
         d = struct.xyz_df
         slice_distance = 9  # in Angstroms, should equal two coordnation spheres
 
-        for move_index in move_indices:
-            """Slice the structure around the atom in question"""
-            x_pos = d["df_x"].at[move_index, "x"]
-            lower_x = x_pos - slice_distance
-            upper_x = x_pos + slice_distance
+        """Slice the structure around the atom in question"""
+        x_pos = d["df_x"].at[move_index, "x"]
+        lower_x = x_pos - slice_distance
+        upper_x = x_pos + slice_distance
 
-            y_pos = d["df_y"].at[move_index, "y"]
-            lower_y = y_pos - slice_distance
-            upper_y = y_pos + slice_distance
+        y_pos = d["df_y"].at[move_index, "y"]
+        lower_y = y_pos - slice_distance
+        upper_y = y_pos + slice_distance
 
-            z_pos = d["df_z"].at[move_index, "z"]
-            lower_z = z_pos - slice_distance
-            upper_z = z_pos + slice_distance
+        z_pos = d["df_z"].at[move_index, "z"]
+        lower_z = z_pos - slice_distance
+        upper_z = z_pos + slice_distance
 
-            sliced_df_x = d["df_x"].loc[
-                (lower_x < d["df_x"]["x"]) & (d["df_x"]["x"] < upper_x)
-            ]
-            sliced_df_y = d["df_y"].loc[
-                (lower_y < d["df_y"]["y"]) & (d["df_y"]["y"] < upper_y)
-            ]
-            sliced_df_z = d["df_z"].loc[
-                (lower_z < d["df_z"]["z"]) & (d["df_z"]["z"] < upper_z)
-            ]
+        sliced_df_x = d["df_x"].loc[
+            (lower_x < d["df_x"]["x"]) & (d["df_x"]["x"] < upper_x)
+        ]
+        sliced_df_y = d["df_y"].loc[
+            (lower_y < d["df_y"]["y"]) & (d["df_y"]["y"] < upper_y)
+        ]
+        sliced_df_z = d["df_z"].loc[
+            (lower_z < d["df_z"]["z"]) & (d["df_z"]["z"] < upper_z)
+        ]
 
-            # if the slice extends beyond the simulation cell:
-            """ wrap the slice around the simulation box """
-            if lower_x < 0:
-                low_df_x = d["df_x"].loc[d["df_x"]["x"] > struct.lattice.a + lower_x].copy()
-                low_df_x["x"] = low_df_x["x"] - struct.lattice.a
-                sliced_df_x = pd.concat(
-                    [sliced_df_x, low_df_x]
-                    )
-            else:
-                low_df_x = None
-            if lower_y < 0:
-                low_df_y = d["df_y"].loc[d["df_y"]["y"] > struct.lattice.b + lower_y].copy()
-                low_df_y["y"] = low_df_y["y"] - struct.lattice.b
-                sliced_df_y = pd.concat(
-                    [sliced_df_y, low_df_y]
-                    )
-            else:
-                low_df_y = None
-            if lower_z < 0:
-                low_df_z = d["df_z"].loc[d["df_z"]["z"] > struct.lattice.c + lower_z].copy()
-                low_df_z["z"] = low_df_z["z"] - struct.lattice.c
-                sliced_df_z = pd.concat(
-                    [sliced_df_z, low_df_z]
-                    )
-            else:
-                low_df_z = None
-            if upper_x > struct.lattice.a:
-                upper_df_x = d["df_x"].loc[d["df_x"]["x"] < upper_x - struct.lattice.a].copy()
-                upper_df_x["x"] = upper_df_x["x"] + struct.lattice.a
-                sliced_df_x = pd.concat(
-                    [sliced_df_x, upper_df_x]
-                    )
-            else:
-                upper_df_x = None
-            if upper_y > struct.lattice.b:
-                upper_df_y = d["df_y"].loc[d["df_y"]["y"] < upper_y - struct.lattice.b].copy()
-                upper_df_y["y"] = upper_df_y["y"] + struct.lattice.b
-                sliced_df_y = pd.concat(
-                    [sliced_df_y, upper_df_y]
-                    )
-            else:
-                upper_df_y = None
-            if upper_z > struct.lattice.c:
-                upper_df_z = d["df_z"].loc[d["df_z"]["z"] < upper_z - struct.lattice.c].copy()
-                upper_df_z["z"] = upper_df_z["z"] + struct.lattice.c
-                sliced_df_z = pd.concat(
-                    [sliced_df_z, upper_df_z]
-                    )
-            else:
-                upper_df_z = None
-
-
-            # Get common items in sliced dataframes
-            # Find common indices
-            common_indices = sliced_df_x.index.intersection(sliced_df_y.index).intersection(sliced_df_z.index)
-
-            sliced_df = sliced_df_x[
-                sliced_df_x.isin(sliced_df_y.to_dict("list"))
-                & sliced_df_x.isin(sliced_df_z.to_dict("list"))
-            ].dropna()
-
-            # List of dfs to check
-            image_dfs = [low_df_x, low_df_y, low_df_z, upper_df_x, upper_df_y, upper_df_z]
-            common_image_indices = []
-            for df in image_dfs:
-                if df is not None:
-                    common_image_indices.extend(common_indices.intersection(df.index)) 
-
-            filtered_df = pd.DataFrame(index=common_image_indices, columns=['x', 'y', 'z', 'el'])
-            for idx in common_image_indices:
-                for col in ['x', 'y', 'z']:
-                    # Get the values for this index and column from each DataFrame
-                    values = {
-                        'sliced_df_x': sliced_df_x.at[idx, col],
-                        'sliced_df_y': sliced_df_y.at[idx, col],
-                        'sliced_df_z': sliced_df_z.at[idx, col]
-                    }
-                    
-                    value_counts = pd.Series(values).value_counts()
-                    # Select the value that is different
-                    if len(value_counts) > 1:  
-                        differing_value = value_counts.idxmin() 
-                    else:
-                        # If all values are the same, just choose one
-                        differing_value = values['sliced_df_x']
-                    
-                    # Assign the differing value to the result df
-                    filtered_df.at[idx, col] = differing_value
-                    filtered_df.at[idx, 'el'] = sliced_df_x.at[idx, 'el']
-
-            sliced_df = pd.concat(
-                [sliced_df, filtered_df]
+        # if the slice extends beyond the simulation cell:
+        """ wrap the slice around the simulation box """
+        if lower_x < 0:
+            low_df_x = d["df_x"].loc[d["df_x"]["x"] > struct.lattice.a + lower_x].copy()
+            low_df_x["x"] = low_df_x["x"] - struct.lattice.a
+            sliced_df_x = pd.concat(
+                [sliced_df_x, low_df_x]
                 )
+        else:
+            low_df_x = None
+        if lower_y < 0:
+            low_df_y = d["df_y"].loc[d["df_y"]["y"] > struct.lattice.b + lower_y].copy()
+            low_df_y["y"] = low_df_y["y"] - struct.lattice.b
+            sliced_df_y = pd.concat(
+                [sliced_df_y, low_df_y]
+                )
+        else:
+            low_df_y = None
+        if lower_z < 0:
+            low_df_z = d["df_z"].loc[d["df_z"]["z"] > struct.lattice.c + lower_z].copy()
+            low_df_z["z"] = low_df_z["z"] - struct.lattice.c
+            sliced_df_z = pd.concat(
+                [sliced_df_z, low_df_z]
+                )
+        else:
+            low_df_z = None
+        if upper_x > struct.lattice.a:
+            upper_df_x = d["df_x"].loc[d["df_x"]["x"] < upper_x - struct.lattice.a].copy()
+            upper_df_x["x"] = upper_df_x["x"] + struct.lattice.a
+            sliced_df_x = pd.concat(
+                [sliced_df_x, upper_df_x]
+                )
+        else:
+            upper_df_x = None
+        if upper_y > struct.lattice.b:
+            upper_df_y = d["df_y"].loc[d["df_y"]["y"] < upper_y - struct.lattice.b].copy()
+            upper_df_y["y"] = upper_df_y["y"] + struct.lattice.b
+            sliced_df_y = pd.concat(
+                [sliced_df_y, upper_df_y]
+                )
+        else:
+            upper_df_y = None
+        if upper_z > struct.lattice.c:
+            upper_df_z = d["df_z"].loc[d["df_z"]["z"] < upper_z - struct.lattice.c].copy()
+            upper_df_z["z"] = upper_df_z["z"] + struct.lattice.c
+            sliced_df_z = pd.concat(
+                [sliced_df_z, upper_df_z]
+                )
+        else:
+            upper_df_z = None
 
-            """ Call Voronoi function """
-            points = sliced_df[["x", "y", "z"]].to_numpy()
-            voro = Voronoi(points)
 
+        # Get common items in sliced dataframes
+        # Find common indices
+        common_indices = sliced_df_x.index.intersection(sliced_df_y.index).intersection(sliced_df_z.index)
+
+        sliced_df = sliced_df_x[
+            sliced_df_x.isin(sliced_df_y.to_dict("list"))
+            & sliced_df_x.isin(sliced_df_z.to_dict("list"))
+        ].dropna()
+
+        # List of dfs to check
+        image_dfs = [low_df_x, low_df_y, low_df_z, upper_df_x, upper_df_y, upper_df_z]
+        common_image_indices = []
+        for df in image_dfs:
+            if df is not None:
+                common_image_indices.extend(common_indices.intersection(df.index)) 
+
+        filtered_df = pd.DataFrame(index=common_image_indices, columns=['x', 'y', 'z', 'el'])
+        for idx in common_image_indices:
+            for col in ['x', 'y', 'z']:
+                # Get the values for this index and column from each DataFrame
+                values = {
+                    'sliced_df_x': sliced_df_x.at[idx, col],
+                    'sliced_df_y': sliced_df_y.at[idx, col],
+                    'sliced_df_z': sliced_df_z.at[idx, col]
+                }
+                
+                value_counts = pd.Series(values).value_counts()
+                # Select the value that is different
+                if len(value_counts) > 1:  
+                    differing_value = value_counts.idxmin() 
+                else:
+                    # If all values are the same, just choose one
+                    differing_value = values['sliced_df_x']
+                
+                # Assign the differing value to the result df
+                filtered_df.at[idx, col] = differing_value
+                filtered_df.at[idx, 'el'] = sliced_df_x.at[idx, 'el']
+
+        sliced_df = pd.concat(
+            [sliced_df, filtered_df]
+            )
+
+        """ Call Voronoi function """
+        points = sliced_df[["x", "y", "z"]].to_numpy()
+        voro = Voronoi(points)
+
+        return points, sliced_df, voro
+
+
+    def check_structure(self,struct):
+        move_indices = struct.move_indices
+        for move_index in move_indices:
+            points, sliced_df, voro = self.get_voro(move_index, struct)
             """ Checking coordination number """
             # run pymatgen-modified coordination number function on moved atom
             try:
+                result = self.check_distance(move_index, voro, sliced_df, points)
+                if result == False:
+                    return False
                 element_list, el, neighbor_list, nearby_atoms = self.get_coordination(
-                    move_index, voro, sliced_df, points, struct
+                    move_index=move_index, voro=voro, sliced_df=sliced_df, points=points, struct=struct
                 )
             except:
                 return False  # when distances are too short
@@ -596,42 +620,76 @@ class DistancesCoordination(Validator):
                     cn_constraints = self.surface_coordination[el]
                     for el_nn in cn_constraints:
                         el_cn = len([nn for nn in element_list if nn == el_nn])
+                        current_el_cn = struct.sites[move_index].cn[el_nn]
                         if (
                             self.surface_coordination[el][el_nn][0]
                             <= el_cn
                             <= self.surface_coordination[el][el_nn][1]
                         ):
+                            struct.sites[move_index].cn[el_nn] = current_el_cn
                             pass
+
                         else:
-                            return False  # when coordination number isn't right
+                            if not (
+                            self.surface_coordination[el][el_nn][0]
+                            <= current_el_cn
+                            <= self.surface_coordination[el][el_nn][1]
+                        ):
+                                struct.sites[move_index].cn[el_nn] = current_el_cn
+                                pass # the coordination number was already outside of range before move
+                            else:
+                                return False  # when coordination number isn't right
                 else:
                     cn_constraints = self.coordination[el]
                     for el_nn in cn_constraints:
                         el_cn = len([nn for nn in element_list if nn == el_nn])
+                        current_el_cn = struct.sites[move_index].cn[el_nn]
                         if (
                             self.coordination[el][el_nn][0]
                             <= el_cn
                             <= self.coordination[el][el_nn][1]
                         ):
+                            struct.sites[move_index].cn[el_nn] = el_cn
                             pass
                         else:
-                            return False  # when coordination number isn't right
-            elif self.surface_coordination is None:
+                            if not (
+                                self.surface_coordination[el][el_nn][0]
+                                <= current_el_cn
+                                <= self.surface_coordination[el][el_nn][1]
+                            ):
+                                struct.sites[move_index].cn[el_nn] = el_cn
+                                pass # the coordination number was already outside of range before move
+                            else:
+                                return False  # when coordination number isn't right
+            else:
                 cn_constraints = self.coordination[el]
                 for el_nn in cn_constraints:
                     el_cn = len([nn for nn in element_list if nn == el_nn])
+                    current_el_cn = struct.sites[move_index].cn[el_nn]
                     if (
                         self.coordination[el][el_nn][0]
                         <= el_cn
                         <= self.coordination[el][el_nn][1]
                     ):
+                        struct.sites[move_index].cn[el_nn] = el_cn
                         pass
                     else:
-                        return False # when coordination number isn't right
+                        if not (
+                        self.surface_coordination[el][el_nn][0]
+                        <= current_el_cn
+                        <= self.surface_coordination[el][el_nn][1]
+                    ):
+                            struct.sites[move_index].cn[el_nn] = el_cn
+                            pass # the coordination number was already outside of range before move
+                        else:
+                            return False  # when coordination number isn't right
  
             # run pymatgen-modified coordination number function on neighbor atoms
             for atom in nearby_atoms:
                 try:
+                    result = self.check_distance(move_index, voro, sliced_df, points)
+                    if result == False:
+                        return False
                     element_list, el, _, _  = self.get_coordination(
                         atom, voro, sliced_df, points, struct
                     )
@@ -642,45 +700,75 @@ class DistancesCoordination(Validator):
 
                 if self.surface_coordination is not None:
                     if (
-                        struct.sites[move_index].z
+                        struct.sites[atom].z
                         < struct.thickness_z["min_z"] + self.surface_distance
-                        or struct.sites[move_index].z
+                        or struct.sites[atom].z
                         > struct.thickness_z["max_z"] - self.surface_distance
                     ):
-
                         cn_constraints = self.surface_coordination[el]
                         for el_nn in cn_constraints:
                             el_cn = len([nn for nn in element_list if nn == el_nn])
+                            current_el_cn = struct.sites[atom].cn[el_nn]
                             if (
                                 self.surface_coordination[el][el_nn][0]
                                 <= el_cn
                                 <= self.surface_coordination[el][el_nn][1]
                             ):
+                                struct.sites[atom].cn[el_nn] = el_cn
                                 pass
                             else:
-                                return False  # when coordination number isn't right
+                                if not (
+                                self.surface_coordination[el][el_nn][0]
+                                <= current_el_cn
+                                <= self.surface_coordination[el][el_nn][1]
+                            ):
+                                    struct.sites[atom].cn[el_nn] = el_cn
+                                    pass # the coordination number was already outside of range before move
+                                else:
+                                    return False  # when coordination number isn't right
                     else:
                         cn_constraints = self.coordination[el]
                         for el_nn in cn_constraints:
                             el_cn = len([nn for nn in element_list if nn == el_nn])
+                            current_el_cn = struct.sites[atom].cn[el_nn]
                             if (
                                 self.coordination[el][el_nn][0]
                                 <= el_cn
                                 <= self.coordination[el][el_nn][1]
                             ):
+                                struct.sites[atom].cn[el_nn] = el_cn
                                 pass
                             else:
-                                return False  # when coordination number isn't right
-                elif self.surface_coordination is None:
+                                if not (
+                                    self.surface_coordination[el][el_nn][0]
+                                    <= current_el_cn
+                                    <= self.surface_coordination[el][el_nn][1]
+                                ):
+                                    struct.sites[atom].cn[el_nn] = el_cn
+                                    pass # the coordination number was already outside of range before move
+                                else:
+                                    return False  # when coordination number isn't right
+                else:
                     cn_constraints = self.coordination[el]
                     for el_nn in cn_constraints:
                         el_cn = len([nn for nn in element_list if nn == el_nn])
+                        current_el_cn = struct.sites[atom].cn[el_nn]
                         if (
                             self.coordination[el][el_nn][0]
                             <= el_cn
                             <= self.coordination[el][el_nn][1]
                         ):
+                            struct.sites[atom].cn[el_nn] = el_cn
                             pass
                         else:
-                            return False
+                            if not (
+                            self.surface_coordination[el][el_nn][0]
+                            <= current_el_cn
+                            <= self.surface_coordination[el][el_nn][1]
+                        ):
+                                struct.sites[atom].cn[el_nn] = el_cn
+                                pass # the coordination number was already outside of range before move
+                            else:
+                                return False  # when coordination number isn't right
+
         return True
