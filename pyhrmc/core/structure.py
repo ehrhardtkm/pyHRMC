@@ -30,7 +30,7 @@ class Structure(Structure):
         max_z = max([coords[2] for coords in self.cart_coords])
         min_z = min([coords[2] for coords in self.cart_coords])
         thickness = max_z - min_z
-        if self.lattice.abc[2] - thickness >= 1:
+        if self.lattice.abc[2] - thickness >= 5:
             return {"min_z": min_z, "max_z": max_z, "thickness": thickness}
         else:
             return None
@@ -248,10 +248,12 @@ class Structure(Structure):
         rho = self.num_sites / self.slab_volume  
         rho_rmc = self.num_sites / self.volume
         rho_correction = rho_rmc / rho
-        u = self.define_u()
-        
-        G = 4 * np.pi  * rho * r * (rho_correction * g + u - 1)
 
+        if self.thickness_z:
+            u = self.define_u()
+            G = 4 * np.pi  * rho * r * (rho_correction * g + u - 1)
+        else: 
+            G = 4 * np.pi  * rho * r * (g - 1)
         return G
 
     # -------------------------------------------------------------------------
