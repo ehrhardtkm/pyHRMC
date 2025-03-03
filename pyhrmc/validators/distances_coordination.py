@@ -22,7 +22,7 @@ class DistancesCoordination(Validator):
         BulkCoordinationRange,
         SurfaceCoordinationRange = None,
         SurfaceDistance = None,
-        MinDistances = None,
+        MinDistances = None
     ):
         self.min_distances = MinDistances
         self.coordination = BulkCoordinationRange
@@ -653,9 +653,9 @@ class DistancesCoordination(Validator):
                             pass
                         else:
                             if not (
-                                self.surface_coordination[el][el_nn][0]
+                                self.coordination[el][el_nn][0]
                                 <= current_el_cn
-                                <= self.surface_coordination[el][el_nn][1]
+                                <= self.coordination[el][el_nn][1]
                             ):
                                 struct.sites[move_index].cn[el_nn] = el_cn
                                 pass # the coordination number was already outside of range before move
@@ -675,9 +675,9 @@ class DistancesCoordination(Validator):
                         pass
                     else:
                         if not (
-                        self.surface_coordination[el][el_nn][0]
+                        self.coordination[el][el_nn][0]
                         <= current_el_cn
-                        <= self.surface_coordination[el][el_nn][1]
+                        <= self.coordination[el][el_nn][1]
                     ):
                             struct.sites[move_index].cn[el_nn] = el_cn
                             pass # the coordination number was already outside of range before move
@@ -740,9 +740,9 @@ class DistancesCoordination(Validator):
                                 pass
                             else:
                                 if not (
-                                    self.surface_coordination[el][el_nn][0]
+                                    self.coordination[el][el_nn][0]
                                     <= current_el_cn
-                                    <= self.surface_coordination[el][el_nn][1]
+                                    <= self.coordination[el][el_nn][1]
                                 ):
                                     struct.sites[atom].cn[el_nn] = el_cn
                                     pass # the coordination number was already outside of range before move
@@ -762,9 +762,9 @@ class DistancesCoordination(Validator):
                             pass
                         else:
                             if not (
-                            self.surface_coordination[el][el_nn][0]
+                            self.coordination[el][el_nn][0]
                             <= current_el_cn
-                            <= self.surface_coordination[el][el_nn][1]
+                            <= self.coordination[el][el_nn][1]
                         ):
                                 struct.sites[atom].cn[el_nn] = el_cn
                                 pass # the coordination number was already outside of range before move
