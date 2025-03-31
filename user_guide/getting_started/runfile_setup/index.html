@@ -149,7 +149,6 @@
 <h1 id="runfile-setup">Runfile setup</h1>
 <p>All calculation parameters are defined in runfile.py, which instantiates the RMC class before calling the run_rmc() method to perform the simulation. A runfile should begin with necessary imports:</p>
 <pre><code>from pyHRMC.core.rmc import RMC
-import multiprocessing
 </code></pre>
 <h2 id="creating-rmc-object">Creating RMC object</h2>
 <p>To run a simulation, the user must first create a RMC class object with the required arguments. These arguments determine the quench rate of the error and energy constraints.</p>
@@ -182,6 +181,7 @@ import multiprocessing
     validators=dict(),
     qmin=float(),
     charges=dict(),
+    TCS=dict()
     pdf_cutoff=float(),
     gaussian_blur=int(),
     max_steps=int()
@@ -220,6 +220,14 @@ import multiprocessing
 </li>
 <li><strong>qmin:</strong> minimum q value of the experimental scattering data.</li>
 <li><strong>charges:</strong> NOTE: At this time, we do not advise users to use this argument for their simulations.</li>
+<li><strong>TCS:</strong> if desired, users my choose to use their own total scattering cross-section values. This allows HRMC calculations with X-ray or neutron scattering cross-sections, if desired. By choosing to omit this argument, the calculation will default to electron scattering cross-sections. When entering TCS values, use the following format:</li>
+</ul>
+<pre><code>TCS = {
+    'Al': 0.011,
+    'O': 0.0045
+}
+</code></pre>
+<ul>
 <li><strong>pdf_cutoff:</strong> this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.</li>
 <li><strong>gaussian_blur:</strong> this parameter is used when calculating the structure's PDF to determine the degree of Guassian smearing that is used from <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter1d.html">scipy.ndimage.gaussian_filter1d</a>. This value corresponds to sigma in the linked scipy documentation, but is included here as <code>gaussian_blur</code> to avoid confusion.</li>
 <li><strong>max_steps:</strong> maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. </li>
@@ -230,16 +238,15 @@ import multiprocessing
 
 if __name__ == &quot;__main__&quot;:
 
-    rmc = RMC(experimental_G_csv=&quot;35_uncharged_gr.txt&quot;, sigma = 0.1, q_scatter = 0.99995, q_temp = 0.99995, init_temp = 1000, dump_freq = 500)
+    rmc = RMC(experimental_G_csv=&quot;7ps_blur2.txt&quot;, sigma = 0.5, q_scatter = 0.9995, q_temp = 0.9995, init_temp = 2000, dump_freq = 500)
     rmc.run_rmc(
         num_processes = 16,
-        initial_structure=&quot;ularge_3.0.vasp&quot;,
-        experimental_G_csv=&quot;35_uncharged_gr.txt&quot;,
+        initial_structure=&quot;crystal_d3_slab.vasp&quot;,
+        experimental_G_csv=&quot;7ps_blur2.txt&quot;,
         keV=200,
         prdf_args={&quot;bin_size&quot;: 0.04},
-        # error_constant=0.05,
         transformations={
-            &quot;AtomHop&quot;: {}, # consider adding a second, smaller step size &quot;max_step&quot;: 0.2
+            &quot;AtomHop&quot;: {}
         },
 
         validators={
@@ -250,12 +257,17 @@ if __name__ == &quot;__main__&quot;:
                     (&quot;Al&quot;, &quot;O&quot;): 1.6,
                     (&quot;O&quot;, &quot;O&quot;): 2.0
                     },
-                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 0], &quot;O&quot;: [4, 6]}, &quot;O&quot;: {&quot;Al&quot;: [3, 4], &quot;O&quot;: [0, 0]} },
-                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 0], &quot;O&quot;: [4, 6]}, &quot;O&quot;: {&quot;Al&quot;: [2, 4], &quot;O&quot;: [0, 0]} },
+                &quot;BulkCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot; : [0, 0], &quot;O&quot;: [4, 5]}, &quot;O&quot;: {&quot;Al&quot;: [3, 4], &quot;O&quot;: [0, 0]} },
+                &quot;SurfaceCoordinationRange&quot;: {&quot;Al&quot;: {&quot;Al&quot;: [0, 0], &quot;O&quot;: [4, 5]}, &quot;O&quot;: {&quot;Al&quot;: [2, 4], &quot;O&quot;: [0, 0]} },
                 &quot;SurfaceDistance&quot;: 3
                     }
             },
         qmin = 2,
+        gaussian_blur = 2,
+        charges={
+            &quot;Al&quot;: 0,
+            &quot;O&quot;: 0,
+            },
         max_steps= 1000000,
     )
 
