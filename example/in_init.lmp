@@ -1,0 +1,30 @@
+# Initialization
+atom_style atomic
+units metal
+boundary p p p
+atom_modify sort 0 0.0
+newton on
+
+read_data data.lmp                                                                            
+
+### interactions
+pair_style flare
+pair_coeff * * s_lmp.flare
+
+# Groups
+mass 1 26.981539
+mass 2 15.9994
+
+group Al type 1
+group O type 2
+
+# Save the final timestep to a file
+variable    last_step equal "step"
+shell       echo ${last_step} > last_step.txt
+
+# Output
+thermo 1
+thermo_style custom step pe ke etotal
+
+# Run the Simulation
+run 0
