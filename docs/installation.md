@@ -1,10 +1,16 @@
 Installation
 ===
 
-Prior to installing pyHRMC, LAMMPS must be installed and built in serial. Additionally, if using a FLARE potential, LAMMPS must be compiled with FLARE. Instructions for these steps can be found at these links:
+Prior to installing pyHRMC, LAMMPS must be installed and built in serial with the Python interface enabled. Additionally, if using a FLARE potential, LAMMPS must be compiled with FLARE. Instructions for these steps can be found at these links:
 
 - https://docs.lammps.org/Install.html
 - https://mir-group.github.io/flare/installation/lammps.html
+
+After building a LAMMPS binary executable, two additional steps are needed: add the lammps module to your Python interpreter and add the LAMMPS shared libraries to your 'LD_LIBRARY_PATH'. You can add this by adding the following lines to your ~/.bashrc or ~/.bash_profile, or simply add them to your job submission script if you are using job schedulers like SLURM:
+'''
+export PYTHONPATH=/path/to/lammps/python:$PYTHONPATH
+export LD_LIBRARY_PATH=/path/to/lammps/build/lib:$LD_LIBRARY_PATH
+'''
 
 To install pyHRMC, first create a virtual environment with the required packages. You can perform this via conda with the commands:
 ```

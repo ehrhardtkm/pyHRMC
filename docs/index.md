@@ -25,7 +25,7 @@ pyHRMC is a Python implementation of this HRMC algorithm, with several added fea
 
 ## Resources
 
-This code was developed with tools from [pymatgen](https://pymatgen.org/) and matminer[https://hackingmaterials.lbl.gov/matminer/]. 
+This code was developed with tools from [pymatgen](https://pymatgen.org/) and [matminer](https://hackingmaterials.lbl.gov/matminer/). 
 
 For bugs and other issues, please submit them on [Github](https://github.com/ehrhardtkm/pyHRMC).
 

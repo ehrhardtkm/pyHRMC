@@ -3,7 +3,6 @@ Runfile setup
 All calculation parameters are defined in runfile.py, which instantiates the RMC class before calling the run_rmc() method to perform the simulation. A runfile should begin with necessary imports:
 ```
 from pyHRMC.core.rmc import RMC
-import multiprocessing
 ```
 ## Creating RMC object
 
@@ -40,6 +39,7 @@ rmc.run_rmc(
     validators=dict(),
     qmin=float(),
     charges=dict(),
+    TCS=dict()
     pdf_cutoff=float(),
     gaussian_blur=int(),
     max_steps=int()
@@ -67,6 +67,13 @@ rmc.run_rmc(
     - **TargetDensity**
 - **qmin:** minimum q value of the experimental scattering data.
 - **charges:** NOTE: At this time, we do not advise users to use this argument for their simulations.
+- **TCS:** if desired, users my choose to use their own total scattering cross-section values. This allows HRMC calculations with X-ray or neutron scattering cross-sections, if desired. By choosing to omit this argument, the calculation will default to electron scattering cross-sections. When entering TCS values, use the following format:
+```
+TCS = {
+    'Al': 0.011,
+    'O': 0.0045
+}
+```
 - **pdf_cutoff:** this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.
 - **gaussian_blur:** this parameter is used when calculating the structure's PDF to determine the degree of Guassian smearing that is used from [scipy.ndimage.gaussian_filter1d](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter1d.html). This value corresponds to sigma in the linked scipy documentation, but is included here as `gaussian_blur` to avoid confusion.
 - **max_steps:** maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. 
@@ -78,16 +85,15 @@ from pyhrmc.core.rmc import RMC
 
 if __name__ == "__main__":
 
-    rmc = RMC(experimental_G_csv="35_uncharged_gr.txt", sigma = 0.1, q_scatter = 0.99995, q_temp = 0.99995, init_temp = 1000, dump_freq = 500)
+    rmc = RMC(experimental_G_csv="7ps_blur2.txt", sigma = 0.5, q_scatter = 0.9995, q_temp = 0.9995, init_temp = 2000, dump_freq = 500)
     rmc.run_rmc(
         num_processes = 16,
-        initial_structure="ularge_3.0.vasp",
-        experimental_G_csv="35_uncharged_gr.txt",
+        initial_structure="crystal_d3_slab.vasp",
+        experimental_G_csv="7ps_blur2.txt",
         keV=200,
         prdf_args={"bin_size": 0.04},
-        # error_constant=0.05,
         transformations={
-            "AtomHop": {}, # consider adding a second, smaller step size "max_step": 0.2
+            "AtomHop": {}
         },
 
         validators={
@@ -98,12 +104,17 @@ if __name__ == "__main__":
                     ("Al", "O"): 1.6,
                     ("O", "O"): 2.0
                     },
-                "BulkCoordinationRange": {"Al": {"Al" : [0, 0], "O": [4, 6]}, "O": {"Al": [3, 4], "O": [0, 0]} },
-                "SurfaceCoordinationRange": {"Al": {"Al": [0, 0], "O": [4, 6]}, "O": {"Al": [2, 4], "O": [0, 0]} },
+                "BulkCoordinationRange": {"Al": {"Al" : [0, 0], "O": [4, 5]}, "O": {"Al": [3, 4], "O": [0, 0]} },
+                "SurfaceCoordinationRange": {"Al": {"Al": [0, 0], "O": [4, 5]}, "O": {"Al": [2, 4], "O": [0, 0]} },
                 "SurfaceDistance": 3
                     }
             },
         qmin = 2,
+        gaussian_blur = 2,
+        charges={
+            "Al": 0,
+            "O": 0,
+            },
         max_steps= 1000000,
     )
 
