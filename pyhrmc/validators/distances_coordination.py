@@ -408,9 +408,10 @@ class DistancesCoordination(Validator):
         # setting maximum coordination number as 15
         length = 15
         nndata = ""
+        nearby_atoms = []
         if nn[0]["weight"] == 0:
             nn = [x for x in nn if x["weight"] > 0]
-
+            
         else:
             for entry in nn:
                 entry["weight"] = round(entry["weight"], 3)
@@ -444,8 +445,7 @@ class DistancesCoordination(Validator):
                 cn_nninfo[0] = []
                 cn_weights[0] = cn0_weight
 
-            nearby_atoms = [entry['true_site_index'] for entry in nn]
-
+            nearby_atoms=[entry['true_site_index'] for entry in nn]
 
             nndata = self.transform_to_length(
                 self.NNData(nn, cn_weights, cn_nninfo), length

@@ -223,7 +223,7 @@ class RMC:
             for idx, site in enumerate(struct):
                 print(idx)
                 points,sliced_df, voro = validator.get_voro(idx, struct)
-                element_list, _, _, _ = validator.get_coordination(idx, voro, sliced_df, points, struct)
+                element_list, *_ = validator.get_coordination(idx, voro, sliced_df, points, struct)
                 site.cn = {}
                 for el_nn in el_list:
                     site.cn[el_nn] = len([nn for nn in element_list if nn == el_nn])
@@ -248,6 +248,7 @@ class RMC:
         # "species2" = charge,
         # ...
         # }
+        TCS = None,
         pdf_cutoff=1.6,
         gaussian_blur = 1,
         lmp_init="in_init.lmp",
@@ -305,7 +306,7 @@ class RMC:
         """
 
         # energy weighting staging
-        final_temp = 300
+        final_temp = 100
 
         # batch number staging
         num_batch = num_processes
@@ -361,13 +362,17 @@ class RMC:
             for site in initial_structure.sites:
                 site.oxi_state = 0          
 
-        TCS = {}
-        el_tuple = initial_structure.symbol_set
-        for el in el_tuple:
-            el_charge = charges[el]
-            TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV, qmin)
+
+        if TCS == None:
+            TCS = {}
+            el_tuple = initial_structure.symbol_set
+            for el in el_tuple:
+                el_charge = charges[el]
+                TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV, qmin)
+        # if TCS != None, use user inputs 
         setattr(initial_structure, 'TCSs', TCS)
         print(f"Scattering cross sections: {TCS}")
+
 
         # load experimental G(r)
         initial_structure.load_experimental_from_file(self.experimental_G_csv)
