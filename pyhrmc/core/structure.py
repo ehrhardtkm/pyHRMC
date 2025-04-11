@@ -5,7 +5,7 @@ import pandas as pd
 import itertools
 from scipy.ndimage import gaussian_filter1d, zoom
 from pymatgen.core import Structure
-from pyhrmc.core.rdf import RDF
+from pyhrmc.core.rdf import PDF
 
 # from pymatgen.analysis.bond_valence import BVAnalyzer
 import matplotlib.pyplot as plt
@@ -184,7 +184,7 @@ class Structure(Structure):
         # it never changes. (i.e move it to a separate method and use @cached_property)
 
         cutoff = 10
-        prdf_maker = RDF(
+        prdf_maker = PDF(
             cutoff=cutoff, bin_size=0.04, el_switch=self.el_switch, el_list=self.el_list
         )
         prdf_maker.fit([self])

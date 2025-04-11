@@ -7,6 +7,7 @@ import multiprocessing
 import copy
 from itertools import combinations
 import warnings
+import psutil, os
 import logging
 
 import pyhrmc.transformers as transform_mod
@@ -27,6 +28,7 @@ class RMC:
         q_temp=None,
         init_temp=None,
         hybrid=True,
+        lmp_exec=None,
         dump_freq=5000
     ):
         self.hybrid = hybrid
@@ -44,6 +46,7 @@ class RMC:
         if self.hybrid == True:
             from pyhrmc.core.energy import Energy
             self.Lammps_HRMC = Energy
+            self.lmp_exec = lmp_exec
 
         if self.hybrid == True and self.q_temp == None and self.batched_temp == None:
             raise RuntimeError(
@@ -111,11 +114,11 @@ class RMC:
         max_unc = 0
         if self.hybrid == True:
             # HRMC
-            lammps_run = self.Lammps_HRMC(lmp_input, task_id)
+
+            lammps_run = self.Lammps_HRMC(lmp_input, task_id, self.lmp_exec)
             new_energy, max_unc = lammps_run.lammps_energy(
                 structure, self.nsteps, self.success_step, self.dump_freq
             )
-
         structure.load_experimental_from_file(self.experimental_G_csv)
         new_error, slope = structure.prdf_error(neighborlist)
 
@@ -195,7 +198,7 @@ class RMC:
                 return keep_new, new_error
 
     def worker_task(self, structure, lmp_input, task_id):
-        lammps_run = self.Lammps_HRMC(lmp_input, task_id)
+        lammps_run = self.Lammps_HRMC(lmp_input, task_id, self.lmp_exec)
         energy, max_unc = lammps_run.lammps_energy(
             structure, self.nsteps, self.success_step, self.dump_freq
         )
@@ -263,11 +266,8 @@ class RMC:
                     with open("last_step.txt", "r") as file:
                         restart_success_step = int(file.read())
                         self.success_step = restart_success_step
-                except IndexError:
-                    raise RuntimeError(
-                        "You're likely trying to restart a simulation and switch between hybrid and non-hybrid RMC."
-                        "Please change your runfile.py settings for the same type of simulation as previously."
-                    )
+                except:
+                    pass
 
                 with open("error_plotting.txt", "r") as file:
                     lines = file.readlines()

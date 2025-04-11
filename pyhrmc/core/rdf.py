@@ -17,7 +17,7 @@ from matminer.featurizers.base import BaseFeaturizer
 import bisect
 
 
-class RDF(BaseFeaturizer):
+class PDF(BaseFeaturizer):
     """
     Compute the partial radial distribution functions (PRDF) of an xtal structure
 

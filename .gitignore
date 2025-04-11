@@ -7,3 +7,4 @@ status
 dist/
 *.egg-info
 other/
+build/
