@@ -20,7 +20,7 @@ class Energy:
     def lammps_file(self, structure, filename):
         atoms = AseAtomsAdaptor.get_atoms(structure)
         with open(filename, 'w') as f:
-            write(f, atoms, format="lammps-data", specorder=structure.el_list)
+            write(f, atoms, format="lammps-data", specorder=structure.spec_order)
 
     def lammps_energy(self, structure, nsteps, success_step, dump_freq):
         with tempfile.TemporaryDirectory() as tmpdir:

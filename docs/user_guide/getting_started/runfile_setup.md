@@ -14,7 +14,8 @@ rmc = RMC(
     q_scatter=float(), 
     q_temp=float(), 
     init_temp=float(), 
-    dump_freq = 5000
+    dump_freq = 5000,
+    lmp_exec= str()
     )
 ```
 - **experimental_G_csv:**  filename of experiment ePDF
@@ -23,6 +24,7 @@ rmc = RMC(
 - **q_temp:**  quench rate for energy constraint (rate of decreasing temperature). If a value of q_temp < 1 is used, this value will gradually decrease over the course of the simulation.
 - **init_temp:** initial temperature, which is used to calculate the Boltzmann-type probability of accepting an energetically unfavorable step. The program will not quench the temperature below 100 K, so an `init_temp` below this value will remain unchanged regardless of the `q_temp`. For details, see [Background and Theory](https://ehrhardtkm.github.io/pyHRMC/background_theory/)
 - **dump_freq:** the frequency at which to update the [pdf.txt and pdfs.png files](https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/outputs), as well as output the [maximum atomic uncertainty](https://ehrhardtkm.github.io/pyHRMC/user_guide/getting_started/lammps_input) as computed by LAMMPS from a FLARE potential. Defaults to every 5000 HRMC iterations
+- **lmp_exec:** the filepath for the serial build LAMMPS binary executable to use for the calculation
 
 The choice of `sigma`, `init_temp`, and their corresponding quenching rates `q_scatter` and `q_temp` is highly important to allow the simulation to properly converge. Many examples of simulations and their parameters used can be found in the literature, some of which have been listed in the [references section](https://ehrhardtkm.github.io/pyHRMC/background_theory/).
 
@@ -42,7 +44,8 @@ rmc.run_rmc(
     TCS=dict()
     pdf_cutoff=float(),
     gaussian_blur=int(),
-    max_steps=int()
+    max_steps=int(),
+    spec_order=None,
     )
 ```
 - **num_processes:** the number of processes to use in the simulation. If a serial simulation is desired, set to 1. If greater than 1, pyHRMC performs the simulation in iterations. In each iteration, a number of Monte Carlo steps equal to `num_processes` will be independently generated and validated in parallel. Accepted individual steps will then be merged and re-tested in a single structure, which constitutes one iteration. Therefore, the total number of steps will always be equal to `num_processes` x the number of completed iterations. This distinction is particularly important when selecting `q_scatter` and `q_temp` and interpreting output files.
@@ -77,6 +80,7 @@ TCS = {
 - **pdf_cutoff:** this is the distance, in Angstroms, below which will not be included in calculating the PDF error. The value will default to 1.6 Angstroms unless otherwise specified by the user.
 - **gaussian_blur:** this parameter is used when calculating the structure's PDF to determine the degree of Guassian smearing that is used from [scipy.ndimage.gaussian_filter1d](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter1d.html). This value corresponds to sigma in the linked scipy documentation, but is included here as `gaussian_blur` to avoid confusion.
 - **max_steps:** maximum number of steps to perform in the simulation. If running in parallel, note that all atom transformations performed in parallel will be considered as a single step. 
+- **spec_order:** a list of the species types, in order of how they should be included in the LAMMPS data file for energy calculations. Ignore this argument if using RMC.
 
 ## Example
 An example runfile.py for a simulation of amorphous alumina is shown below:

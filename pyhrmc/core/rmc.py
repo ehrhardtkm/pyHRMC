@@ -224,7 +224,7 @@ class RMC:
             for el_type in composition:
                 el_list.append(el_type.symbol)
             for idx, site in enumerate(struct):
-                print(idx)
+                # print(idx)
                 points,sliced_df, voro = validator.get_voro(idx, struct)
                 element_list, *_ = validator.get_coordination(idx, voro, sliced_df, points, struct)
                 site.cn = {}
@@ -258,6 +258,7 @@ class RMC:
         lmp_test="in.lmp",
         lmp_accept="in_accept.lmp",
         max_steps=1000000,
+        spec_order=None,
     ):
 
         if os.path.exists("error_plotting.txt"):
@@ -401,6 +402,7 @@ class RMC:
         INITIALIZE RMC LOOP
         """
         current_structure = copy.deepcopy(initial_structure)
+        current_structure.spec_order = spec_order
         el_switch, el_list = self.store_symbol(current_structure)
         current_structure.el_switch = el_switch
         current_structure.el_list = el_list

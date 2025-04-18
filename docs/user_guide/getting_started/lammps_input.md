@@ -13,10 +13,11 @@ Four sections are required for the in.lmp file: Initialization, Atom groups, Com
 ```
 read_data data.lmp
 ```
-Additionally, if using a potential model trained from FLARE, follow instructions in [their documentation](https://colab.research.google.com/drive/1qgGlfu1BlXQgSrnolS4c4AYeZ-2TaX5Y#scrollTo=VYJVQ7XSWUEq) to include this in the input script.
+Additionally, if using a potential model trained from FLARE, follow instructions in [their documentation](https://colab.research.google.com/drive/1qgGlfu1BlXQgSrnolS4c4AYeZ-2TaX5Y#scrollTo=VYJVQ7XSWUEq) to include this in the input script. **NOTE:** You must include the full, absolute filepath for the potential for pyHRMC to find the file.
+
 ```
 pair_style    flare
-pair_coeff    * * lmp.flare
+pair_coeff    * * /your/path/to/lmp.flare
 ```
 **Atom groups:** Add the mass and element names. The numbering of the atom types must follow the order of atoms in the original structure file.
 ```
