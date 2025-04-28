@@ -2369,7 +2369,7 @@ class Interpolator(Structure):
         return g, l_relativistic
 
     # method to calculate TCS after the appropriate row of values have been selected from database
-    def calc_TCS(self, a_terms, b_terms, g, l, mintheta):
+    def calc_TCS(self, a_terms, b_terms, g, l, mintheta, oxi_state):
 
         a1 = a_terms[0]
         a2 = a_terms[1]
@@ -2443,6 +2443,7 @@ class Interpolator(Structure):
                             * math.exp(-b5 * (math.sin(math.radians(theta)) / l) ** 2)
                         )
                     )
+                    + ( 0.023934 * oxi_state / ((math.sin(math.radians(theta)) / l) ** 2) )
                 )
                 ** 2
             )
@@ -2451,7 +2452,7 @@ class Interpolator(Structure):
         # in angstroms^2
         TCS_corrected = TCS[0] / 100 * math.pi
 
-        # empirical corrective factor pi, so that values are coparable to NIST electron scattering cross section database
+        # empirical corrective factor, so that values are coparable to NIST electron scattering cross section database
         # https://srdata.nist.gov/srd64/
 
         return TCS_corrected
@@ -2468,7 +2469,7 @@ class Interpolator(Structure):
         # for el, charge in partial_charges.items():
         # get TCS for neutral atom
         a_terms_neutral, b_terms_neutral = self.select_terms(el, OS=0)
-        TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, g, l, mintheta)
+        TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, g, l, mintheta, 0)
 
         if partial_charge == 0:
             interpolated_TCS = TCS1
@@ -2493,7 +2494,7 @@ class Interpolator(Structure):
                     e_count = Z - oxi_state
                     rel_e_changes.append(e_count / Z)
                     a_terms_ion, b_terms_ion = self.select_terms(el, OS=oxi_state)
-                    TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l, qmin)
+                    TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l, qmin, oxi_state)
                     TCSs.append(TCS_ion)
                     ln_TCSs.append(math.log(TCS_ion))
 
