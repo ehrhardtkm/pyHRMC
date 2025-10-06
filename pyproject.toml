@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyhrmc"
-version = "0.1.0"
+version = "0.1.2"
 description = "A Python implementation of Hybrid Reverse Monte Carlo for atomistic modeling from electron total scattering"
 readme = "README.md"
 

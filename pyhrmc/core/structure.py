@@ -6,6 +6,7 @@ import itertools
 from scipy.ndimage import gaussian_filter1d, zoom
 from pymatgen.core import Structure
 from pyhrmc.core.rdf import PDF
+from pyhrmc.core.sq_to_gr import PDF_builder
 
 # from pymatgen.analysis.bond_valence import BVAnalyzer
 import matplotlib.pyplot as plt
@@ -15,6 +16,7 @@ from pymatgen.core.sites import PeriodicSite, Site
 from pymatgen.core.composition import Composition
 import collections
 import warnings
+from operator import attrgetter
 
 warnings.filterwarnings("ignore")
 
@@ -68,6 +70,11 @@ class Structure(Structure):
         except:
             elements = self.symbol_set
         return list(itertools.combinations_with_replacement(elements, 2))
+    
+    @property
+    def atomic_fractions(self):
+        return self.composition.fractional_composition.to_reduced_dict 
+
 
     def move_indices(self, move_indices):
         self.move_indices = move_indices
@@ -178,6 +185,9 @@ class Structure(Structure):
 
         return weightings
 
+
+
+
     def partial_rdfs(self, neighborlist):
 
         # OPTIMIZE: consider caching the creation/fitting of this class because
@@ -236,25 +246,33 @@ class Structure(Structure):
 
         return u_values
 
+    def partial_pdf_G(self, neighborlist):
+        PDF = PDF_builder()
 
-    def full_pdf_G(self, neighborlist):
+        rdfs_dict = self.partial_rdfs(neighborlist)
 
-        # cutoff=10, bin_size=0.04 is hardcoded above --> array size will
-        # always be 250. This info is also the "bins" variable in the
-        # partial_rdfs method -- which we didn't save earlier
-        r = np.arange(0, 10, 0.04)
-
-        g = self.full_pdf_g(neighborlist)
         rho = self.num_sites / self.slab_volume  
         rho_rmc = self.num_sites / self.volume
         rho_correction = rho_rmc / rho
 
-        if self.thickness_z:
-            u = self.define_u()
-            G = 4 * np.pi  * rho * r * (rho_correction * g + u - 1)
-        else: 
-            G = 4 * np.pi  * rho * r * (g - 1)
+        g, G_dict = PDF.compute_partial_Gr_from_Sij(rdfs_dict, self.atomic_fractions, rho_correction, Q_min =1, Q_max = 40)
+
+        return G_dict
+
+
+    def full_pdf_G(self, neighborlist):
+        PDF = PDF_builder()
+
+        rdfs_dict = self.partial_rdfs(neighborlist)
+
+        rho = self.num_sites / self.slab_volume  
+        rho_rmc = self.num_sites / self.volume
+        rho_correction = rho_rmc / rho
+
+        r , G = PDF.compute_Gr_from_SQ(self.TCSs, rdfs_dict, self.atomic_fractions, rho_correction, Q_min =1, Q_max = 40)
+
         return G
+
 
     # -------------------------------------------------------------------------
     # Methods for comparing to experiment
@@ -272,7 +290,7 @@ class Structure(Structure):
         self.r_experimental = my_data.r.values
         self.G_experimental = my_data.gr.values
 
-    def prdf_error(self, neighborlist):
+    def prdf_error(self, neighborlist ):
         if self.r_experimental is None or self.G_experimental is None:
             raise Exception("Please call load_experimental_from_file first")
 
@@ -310,7 +328,7 @@ class Structure(Structure):
 
         return error, slope
 
-    def plot_pdf(self, neighborlist, file_name, slope):
+    def plot_pdf(self, file_name, slope, neighborlist):
         r = self.r_experimental
         exp = self.G_experimental
         calc = self.full_pdf_G(neighborlist)
@@ -340,6 +358,45 @@ class Structure(Structure):
 
 
         return
+
+    def plot_partial_pdf(self, slope, neighborlist):
+        partial_G = self.partial_pdf_G(neighborlist)
+        r = self.r_experimental 
+        exp = self.G_experimental
+
+        plt.figure()  # Create a new figure before the loop
+
+        with open("partial_ pdf.txt", "w") as file:
+            # write r once (first line)
+            file.write(" ".join(map(str, r)) + "\n")
+
+            # then one line per pair with that pair's G_scaled
+            for pair in self.element_pairs:
+                G = partial_G[pair]
+                current_size = len(G)
+                target_size = len(exp)
+                zoom_factor = target_size / current_size
+                G_scaled = zoom(G, zoom_factor) * slope
+
+                zero_distance = self.pdf_cutoff
+                PDF_maximum_radial_distance = 10
+                zero_until = int(zero_distance / PDF_maximum_radial_distance * target_size)
+                G_scaled[:zero_until] = 0
+                exp[:zero_until] = 0
+
+                file.write(f"{pair} " + " ".join(map(str, G_scaled)) + "\n")
+
+                self.full_pdf_G_scaled = G_scaled
+                plt.plot(r, G_scaled, label=f"{pair}")
+
+        plt.legend()
+        plt.savefig("partial_pdfs.png")
+        plt.show()
+        plt.close()
+
+        return
+
+
 
     def plot_error(self):
         try:

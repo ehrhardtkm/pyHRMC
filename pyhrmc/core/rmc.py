@@ -10,6 +10,7 @@ import warnings
 import psutil, os
 import logging
 
+
 import pyhrmc.transformers as transform_mod
 import pyhrmc.validators as validator_mod
 from pyhrmc.core.structure import Structure
@@ -91,7 +92,7 @@ class RMC:
                 keep_new = self.choose_acceptance(
                     "single", 
                     new_structure, 
-                    neighborlist, 
+                    neighborlist,
                     self.batched_error_constant
                 )
             if keep_new:
@@ -224,6 +225,10 @@ class RMC:
             for el_type in composition:
                 el_list.append(el_type.symbol)
             for idx, site in enumerate(struct):
+                # #debug
+                # site.cn = {}
+                # for el_nn in el_list:
+                #     site.cn[el_nn] = 3             
                 # print(idx)
                 points,sliced_df, voro = validator.get_voro(idx, struct)
                 element_list, *_ = validator.get_coordination(idx, voro, sliced_df, points, struct)
@@ -235,7 +240,7 @@ class RMC:
     def run_rmc(
         self,
         num_processes=int(),
-        initial_structure="amorphous_al2o3.vasp",
+        structure="amorphous_al2o3.vasp",
         experimental_G_csv="al2o3_5nm_gr.txt",
         keV=200,
         prdf_args={"bin_size": 0.04},
@@ -244,6 +249,7 @@ class RMC:
         },
         validators={},
         qmin = float(), 
+        qmax = float(),
         charges=None,
         # if defining charges as user:
         # charges = {
@@ -260,6 +266,7 @@ class RMC:
         max_steps=1000000,
         spec_order=None,
     ):
+
 
         if os.path.exists("error_plotting.txt"):
             if self.hybrid == True:
@@ -307,7 +314,7 @@ class RMC:
         """
 
         # energy weighting staging
-        final_temp = 100
+        final_temp = 50
 
         # batch number staging
         num_batch = num_processes
@@ -335,8 +342,8 @@ class RMC:
                 for line in file:
                     lmp_acc_in.append(line)
 
-        # convert to our python class
-        initial_structure = Structure.from_file(initial_structure)
+        initial_structure = Structure.from_file(structure)
+        initial_structure.file_name = structure
         initial_structure.xyz_df = initial_structure.xyz()
         # create neighborlist
         initial_structure_neighborlist = initial_structure.get_all_neighbors(r=10.0)
@@ -369,10 +376,11 @@ class RMC:
             el_tuple = initial_structure.symbol_set
             for el in el_tuple:
                 el_charge = charges[el]
-                TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV, qmin)
+                TCS[el] = struct_consts.select_terms(el, OS = 0)
+                #TCS[el] = struct_consts.interpolated_TCS(el, el_charge, keV, qmin, qmax)
         # if TCS != None, use user inputs 
         setattr(initial_structure, 'TCSs', TCS)
-        print(f"Scattering cross sections: {TCS}")
+        # print(f"Scattering cross sections: {TCS}")
 
 
         # load experimental G(r)
@@ -409,9 +417,7 @@ class RMC:
         current_structure.pdf_cutoff = pdf_cutoff
         current_structure.gaussian_blur = gaussian_blur
         current_structure_neighborlist = initial_structure_neighborlist
-        self.current_error, slope = current_structure.prdf_error(
-            current_structure_neighborlist
-        )
+        self.current_error, slope = current_structure.prdf_error(current_structure_neighborlist)
         current_e = round(self.current_error, 5)
         # additional steps to initialize HRMC
         if self.hybrid == True:
@@ -432,7 +438,10 @@ class RMC:
         moves_attempted = 0
 
         current_structure.plot_pdf(
-            current_structure_neighborlist, experimental_G_csv, slope
+            experimental_G_csv, slope , current_structure_neighborlist
+        )
+        current_structure.plot_partial_pdf(slope,
+            current_structure_neighborlist
         )
 
         """
@@ -444,9 +453,9 @@ class RMC:
             if self.nsteps % self.dump_freq == 0:
                 if os.path.exists("pdfs.png"):
                     os.remove("pdfs.png")
-                current_structure.plot_pdf(
-                    current_structure_neighborlist, experimental_G_csv, slope
+                current_structure.plot_pdf(experimental_G_csv, slope, current_structure_neighborlist
                 )
+                current_structure.plot_partial_pdf(slope, current_structure_neighborlist)
 
             transformer = transformation_objects[
                 0

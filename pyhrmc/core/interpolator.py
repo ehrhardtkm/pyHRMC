@@ -2352,7 +2352,7 @@ class Interpolator(Structure):
             a_col += 1
             b_col += 1
 
-        return a_terms, b_terms
+        return (a_terms, b_terms)
 
     def electron_properties(self, keV):
         c = 2.9979 * 10**8
@@ -2369,7 +2369,7 @@ class Interpolator(Structure):
         return g, l_relativistic
 
     # method to calculate TCS after the appropriate row of values have been selected from database
-    def calc_TCS(self, a_terms, b_terms, g, l, mintheta, oxi_state):
+    def calc_TCS(self, a_terms, b_terms, qmin, qmax, oxi_state):
 
         a1 = a_terms[0]
         a2 = a_terms[1]
@@ -2386,90 +2386,53 @@ class Interpolator(Structure):
             b5 = b_terms[4]
 
         if len(a_terms) < 5:
-            DCS = lambda theta: (
-                2
-                * math.pi
-                * math.sin(math.radians(theta))
-                * (
-                    g
-                    * (
-                        (a1 * math.exp(-b1 * (math.sin(math.radians(theta)) / l) ** 2))
-                        + (
-                            a2
-                            * math.exp(-b2 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                        + (
-                            a3
-                            * math.exp(-b3 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                        + (
-                            a4
-                            * math.exp(-b4 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                    )
-                )
-                ** 2
-            )
-
-            # ff_total = lambda theta: ((a1 * math.exp( -b1 * (math.sin(math.radians(theta))/l) **2) ) +
-            #     (a2 * math.exp( -b2 * (math.sin(math.radians(theta))/l) **2) ) +
-            #     (a3 * math.exp( -b3 * (math.sin(math.radians(theta))/l) **2) )  +
-            #     (a4 * math.exp( -b4 * (math.sin(math.radians(theta))/l) **2) )
-            #     )
+            ff_total = (lambda q, a1=a1, a2=a2, a3=a3, a4=a4,
+                         b1=b1, b2=b2, b3=b3, b4=b4: 
+            a1*np.exp(-b1*(q/(4*np.pi))**2) +
+            a2*np.exp(-b2*(q/(4*np.pi))**2) +
+            a3*np.exp(-b3*(q/(4*np.pi))**2) +
+            a4*np.exp(-b4*(q/(4*np.pi))**2)
+        )
 
         else:
-            DCS = lambda theta: (
-                2
-                * math.pi
-                * math.sin(math.radians(theta))
-                * (
-                    g
-                    * (
-                        (a1 * math.exp(-b1 * (math.sin(math.radians(theta)) / l) ** 2))
-                        + (
-                            a2
-                            * math.exp(-b2 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                        + (
-                            a3
-                            * math.exp(-b3 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                        + (
-                            a4
-                            * math.exp(-b4 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                        + (
-                            a5
-                            * math.exp(-b5 * (math.sin(math.radians(theta)) / l) ** 2)
-                        )
-                    )
-                    + ( 0.023934 * oxi_state / ((math.sin(math.radians(theta)) / l) ** 2) )
-                )
-                ** 2
-            )
+            ff_total = (lambda q, a1=a1, a2=a2, a3=a3, a4=a4, a5=a5,
+                         b1=b1, b2=b2, b3=b3, b4=b4, b5=b5: 
+            a1*np.exp(-b1*(q/(4*np.pi))**2) +
+            a2*np.exp(-b2*(q/(4*np.pi))**2) +
+            a3*np.exp(-b3*(q/(4*np.pi))**2) +
+            a4*np.exp(-b4*(q/(4*np.pi))**2) +
+            a5*np.exp(-b5*(q/(4*np.pi))**2) +
+            0.023934 * (oxi_state /float((q)/(4*np.pi)**2))
+        )
 
-        TCS = integrate.quad(DCS, mintheta, 180)
-        # in angstroms^2
-        TCS_corrected = TCS[0] / 100 * math.pi
+        # integrand, err = integrate.quad(ff_total, qmin, qmax)
+        # ff_eff = (1 / (qmax - qmin)) * integrand
+
+        # TCS = integrate.quad(DCS, mintheta, 180)
+        # # in angstroms^2
+        # TCS_corrected = TCS[0] / 100 * math.pi
 
         # empirical corrective factor, so that values are coparable to NIST electron scattering cross section database
         # https://srdata.nist.gov/srd64/
 
-        return TCS_corrected
+        return ff_total # TCS_corrected
 
-    def interpolated_TCS(self, el, partial_charge, keV, qmin):
+    def interpolated_TCS(self, el, partial_charge, keV, qmin, qmax):
         # get electron wavelength and relativistic correction
         g, l = self.electron_properties(keV)
         # partial_charges = self.partial_charges(struct)
 
         #convert qmin to theta (in radians)
-        mintheta = math.asin( (qmin * l ) / ( 4 * math.pi ) )
-        mintheta = math.degrees(mintheta)
+        # mintheta = math.asin( (qmin * l ) / ( 4 * math.pi ) )
+        # mintheta = math.degrees(mintheta)
+
+        # maxtheta =  math.asin( (qmax * l ) / ( 4 * math.pi ) )
+        # maxtheta = math.degrees(maxtheta)
 
         # for el, charge in partial_charges.items():
         # get TCS for neutral atom
         a_terms_neutral, b_terms_neutral = self.select_terms(el, OS=0)
-        TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, g, l, mintheta, 0)
+        TCS1 = self.calc_TCS(a_terms_neutral, b_terms_neutral, qmin, qmax, 0)
 
         if partial_charge == 0:
             interpolated_TCS = TCS1
@@ -2494,7 +2457,7 @@ class Interpolator(Structure):
                     e_count = Z - oxi_state
                     rel_e_changes.append(e_count / Z)
                     a_terms_ion, b_terms_ion = self.select_terms(el, OS=oxi_state)
-                    TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, g, l, qmin, oxi_state)
+                    TCS_ion = self.calc_TCS(a_terms_ion, b_terms_ion, qmin, qmax, oxi_state)
                     TCSs.append(TCS_ion)
                     ln_TCSs.append(math.log(TCS_ion))
 
