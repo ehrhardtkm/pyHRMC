@@ -52,7 +52,7 @@ def test_hrmc_std(hybrid, capfd, cleanup_output_files):
     max_steps = 10
     rmc.run_rmc(
         num_processes = 1,
-        initial_structure=input_files['ularge_3.0.vasp'],
+        structure=input_files['ularge_3.0.vasp'],
         keV=200,
         prdf_args={"bin_size": 0.04},
         # error_constant=0.05,
